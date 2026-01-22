@@ -21,7 +21,7 @@ export default function HomePage() {
           {/* AUTH BUTTONS */}
           <div className="flex items-center gap-3">
             <button
-              className="px-4 py-2 rounded-md text-white hover:bg-white/10 transition"
+              className="text-white hover:bg-white/10"
               onClick={() => window.location.href = '/login'}
             >
               Login
