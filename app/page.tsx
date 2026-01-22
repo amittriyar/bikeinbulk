@@ -20,7 +20,7 @@ export default function HomePage() {
 
           {/* AUTH BUTTONS */}
           <div className="flex items-center gap-3">
-            <button variant="ghost" className="text-white hover:bg-white/10" onClick={() => window.location.href='/login'}>
+            <button variant= className="text-white hover:bg-white/10" onClick={() => window.location.href='/login'}>
               Login
             </button>
             <button className="bg-white text-indigo-700 hover:bg-indigo-100" onClick={() => window.location.href='/signup'}>
