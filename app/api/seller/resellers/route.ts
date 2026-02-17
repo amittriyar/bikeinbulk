@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-
+import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 
 export async function GET() {
+  const db = getDb(); // ✅ Initialize INSIDE handler
+
   try {
     const resellers = await db.reseller.findMany({
       orderBy: { createdAt: 'desc' }
@@ -21,6 +22,7 @@ export async function GET() {
 
 
 export async function POST(req: Request) {
+   const db = getDb(); // ✅ Initialize INSIDE handler
   try {
     const payload = await req.json();
 

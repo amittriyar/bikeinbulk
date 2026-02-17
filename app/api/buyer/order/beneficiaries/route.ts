@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,6 +8,8 @@ export const dynamic = 'force-dynamic';
 /* ================= GET ================= */
 
 export async function GET(req: Request) {
+  const db = getDb(); // ✅ initialize inside handler
+
   const { searchParams } = new URL(req.url);
   const buyerId = searchParams.get('buyerId');
 
@@ -31,10 +33,11 @@ export async function GET(req: Request) {
 }
 
 
-
 /* ================= POST ================= */
 
 export async function POST(req: Request) {
+  const db = getDb(); // ✅ initialize inside handler
+
   try {
     const body = await req.json();
 

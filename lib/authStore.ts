@@ -1,4 +1,5 @@
-import { db } from './db';
+import { getDb } from './db';
+
 import bcrypt from 'bcrypt';
 
 type UserRole = 'BUYER' | 'SELLER' | 'ADMIN';
@@ -11,9 +12,10 @@ type AuthResult = {
 };
 
 export async function authenticateUser(
-  username: string,
+    username: string,
   password: string
 ): Promise<AuthResult> {
+  const db = getDb();
   const user = await db.user.findUnique({
     where: { username },
   });

@@ -2,7 +2,8 @@
    Voucher Store (DB-backed)
    =============================== */
 
-import { db } from './db';
+import { getDb } from './db';
+
 
 export type Voucher = {
   voucherId: string;
@@ -21,6 +22,7 @@ export type Voucher = {
  * Write / Issue a voucher
  */
 export async function writeVoucher(voucher: Voucher) {
+  const db = getDb();
   await db.voucher.create({
     data: {
       voucherId: voucher.voucherId,
@@ -43,12 +45,14 @@ export async function writeVoucher(voucher: Voucher) {
  * Read helpers
  */
 export async function listVouchers() {
+  const db = getDb();
   return db.voucher.findMany({
     orderBy: { createdAt: 'desc' },
   });
 }
 
 export async function getVoucherById(voucherId: string) {
+  const db = getDb();
   return db.voucher.findUnique({
     where: { voucherId },
   });
@@ -58,9 +62,11 @@ export async function getVoucherById(voucherId: string) {
  * Update status (redeem / expire)
  */
 export async function updateVoucherStatus(
+ 
   voucherId: string,
   status: 'ISSUED' | 'REDEEMED' | 'EXPIRED'
 ) {
+  const db = getDb();
   await db.voucher.update({
     where: { voucherId },
     data: {

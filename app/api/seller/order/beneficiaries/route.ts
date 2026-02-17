@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 
 export async function GET(req: Request) {
+  const db = getDb(); // ✅ Lazy initialization
   const { searchParams } = new URL(req.url);
   const sellerId = searchParams.get('sellerId');
 

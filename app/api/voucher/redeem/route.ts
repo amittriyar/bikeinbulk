@@ -1,11 +1,38 @@
-import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 
+/* ================= GET ================= */
+
+export async function GET(req: Request) {
+  const db = getDb();
+
+  const { searchParams } = new URL(req.url);
+  const orderId = searchParams.get('orderId');
+
+  const vouchers = await db.voucher.findMany({
+    where: orderId ? { orderId } : {},
+    include: {
+      beneficiary: true,
+      reseller: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+
+  return NextResponse.json(vouchers);
+}
+
+
+/* ================= POST ================= */
+
 export async function POST(req: Request) {
+  const db = getDb(); // ✅ Must initialize here too
+
   const { voucherId, resellerCode } = await req.json();
 
   if (!voucherId || !resellerCode) {

@@ -2,7 +2,8 @@
    Beneficiary Store (DB-backed)
    =============================== */
 
-import { db } from './db';
+import { getDb } from './db';
+
 
 export type Beneficiary = {
   beneficiaryId: string;
@@ -23,6 +24,7 @@ export type OrderBeneficiaryMap = {
 /* ---------- Beneficiary CRUD ---------- */
 
 export async function addBeneficiary(b: Beneficiary) {
+  const db = getDb();
   await db.beneficiary.create({
     data: {
       beneficiaryId: b.beneficiaryId,
@@ -38,12 +40,14 @@ export async function addBeneficiary(b: Beneficiary) {
 }
 
 export async function listBeneficiaries() {
+  const db = getDb();
   return db.beneficiary.findMany({
     orderBy: { createdAt: 'desc' },
   });
 }
 
 export async function getBeneficiaryById(beneficiaryId: string) {
+  const db = getDb();
   return db.beneficiary.findUnique({
     where: { beneficiaryId },
   });
@@ -52,6 +56,7 @@ export async function getBeneficiaryById(beneficiaryId: string) {
 /* ---------- Order ↔ Beneficiary Mapping ---------- */
 
 export async function mapBeneficiaryToOrder(map: OrderBeneficiaryMap) {
+  const db = getDb();
   await db.orderBeneficiary.create({
     data: {
       orderId: map.orderId,
@@ -65,6 +70,7 @@ export async function mapBeneficiaryToOrder(map: OrderBeneficiaryMap) {
 }
 
 export async function listOrderBeneficiaries(orderId?: string) {
+  const db = getDb();
   return db.orderBeneficiary.findMany({
     where: orderId ? { orderId } : undefined,
     orderBy: { createdAt: 'desc' },
@@ -76,6 +82,7 @@ export async function updateVoucherStatus(
   beneficiaryId: string,
   status: OrderBeneficiaryMap['voucherStatus']
 ) {
+  const db = getDb();
   await db.orderBeneficiary.updateMany({
     where: {
       orderId,

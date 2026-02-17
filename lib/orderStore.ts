@@ -1,4 +1,5 @@
-import { db } from './db';
+import { getDb } from './db';
+
 
 export type Order = {
   orderId: string;
@@ -24,8 +25,10 @@ export type Order = {
 ================================= */
 
 export async function writeOrder(
+  
   order: Omit<Order, 'createdAt'>
 ) {
+  const db = getDb();
   return db.order.create({
     data: {
       orderId: order.orderId,
@@ -51,6 +54,7 @@ export async function writeOrder(
 ================================= */
 
 export async function readOrders(): Promise<Order[]> {
+  const db = getDb();
   return db.order.findMany({
     orderBy: { createdAt: 'desc' },
   });

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getDb } from '@/lib/db';
+
 import bcrypt from 'bcrypt';
 
 export const runtime = 'nodejs';
@@ -7,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 
 export async function POST(req: Request) {
+  const db = getDb(); // ✅ Initialize INSIDE handler
   const body = await req.json();
 
   const { username, password, role } = body;

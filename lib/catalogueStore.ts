@@ -2,7 +2,8 @@
    Catalogue Store (DB-backed)
    =============================== */
 
-import { db } from './db';
+import { getDb } from './db';
+
 
 export type SellerCatalogue = {
   id: string;
@@ -21,18 +22,21 @@ export type SellerCatalogue = {
 /* ---------- READ ---------- */
 
 export async function readCatalogues(): Promise<SellerCatalogue[]> {
+  const db = getDb();
   return db.catalogue.findMany({
     orderBy: { createdAt: 'desc' },
   });
 }
 
 export async function readCatalogue(id: string): Promise<SellerCatalogue | null> {
+  const db = getDb();
   return db.catalogue.findUnique({
     where: { id },
   });
 }
 
 export async function readSellerCatalogue(oemName?: string): Promise<SellerCatalogue[]> {
+  const db = getDb();
   return db.catalogue.findMany({
     where: oemName ? { oemName } : undefined,
     orderBy: { createdAt: 'desc' },
@@ -42,6 +46,8 @@ export async function readSellerCatalogue(oemName?: string): Promise<SellerCatal
 /* ---------- WRITE ---------- */
 
 export async function writeCatalogue(item: SellerCatalogue) {
+  const db = getDb();
+ 
   await db.catalogue.create({
     data: {
       ...item,
@@ -52,6 +58,7 @@ export async function writeCatalogue(item: SellerCatalogue) {
 }
 
 export async function writeAllCatalogues(items: SellerCatalogue[]) {
+  const db = getDb();
   await db.catalogue.deleteMany();
 
   for (const item of items) {

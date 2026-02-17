@@ -2,7 +2,8 @@
    RFQ Store (DB-backed with Prisma)
    =============================== */
 
-import { db } from './db';
+import { getDb } from './db';
+
 
 export type RFQItem = {
   catalogueId?: string;
@@ -25,6 +26,7 @@ export type RFQ = {
  * WRITE – Create RFQ
  */
 export async function writeRFQ(rfq: RFQ) {
+  const db = getDb();
   await db.rFQ.create({
   data: {
     rfqId: rfq.rfqId,
@@ -42,6 +44,7 @@ export async function writeRFQ(rfq: RFQ) {
  * READ – Buyer RFQs
  */
 export async function listBuyerRFQs(buyerId: string) {
+  const db = getDb();
   return db.rFQ.findMany({
     where: { buyerId },
     orderBy: { createdAt: 'desc' },
@@ -52,6 +55,7 @@ export async function listBuyerRFQs(buyerId: string) {
  * READ – Seller RFQs
  */
 export async function listSellerRFQs() {
+  const db = getDb();
   return db.rFQ.findMany({
     orderBy: { createdAt: 'desc' },
   });
@@ -61,6 +65,7 @@ export async function listSellerRFQs() {
  * READ – Single RFQ
  */
 export async function getRFQById(rfqId: string) {
+  const db = getDb();
   return db.rFQ.findUnique({
     where: { rfqId },
   });
@@ -70,6 +75,7 @@ export async function getRFQById(rfqId: string) {
  * UPDATE – Append seller bid to RFQ
  */
 export async function appendBidToRFQ(rfqId: string, bid: any) {
+  const db = getDb();
   const rfq = await db.rFQ.findUnique({
     where: { rfqId },
   });
