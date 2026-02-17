@@ -1,0 +1,27 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+
+export const runtime = 'nodejs';
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const buyerId = searchParams.get('buyerId');
+
+  if (!buyerId) return NextResponse.json([]);
+
+  const vouchers = await db.voucher.findMany({
+    where: {
+      order: {
+        buyerId
+      }
+    },
+    include: {
+      beneficiary: true,
+      reseller: true,
+      order: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  return NextResponse.json(vouchers);
+}

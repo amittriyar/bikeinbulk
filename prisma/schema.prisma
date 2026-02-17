@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RFQ {
+  id        String   @id @default(uuid())
+  rfqId     String   @unique
+  buyerId   String
+  rfqType   String
+  status    String
+  items     Json
+  bids      Json?
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id               String   @id @default(uuid())
+  orderId          String   @unique
+  buyerId          String
+  sellerId         String?
+  sellerName       String?
+  rfqId            String?
+  bidId            String?
+  items            Json?
+  unitPrice        Float?
+  moq              Int?
+  deliveryTimeline String?
+  validityDays     Int?
+  status           String
+  createdAt        DateTime @default(now())
+
+  orderMappings OrderBeneficiary[]
+  vouchers      Voucher[]
+}
+
+model Catalogue {
+  id              String   @id @default(uuid())
+  oemName         String
+  modelName       String
+  category        String?
+  fuelType        String?
+  engineCapacity  String?
+  exShowroomPrice Float
+  moq             Int
+  status          String // ← revert to String
+  createdAt       DateTime @default(now())
+}
+
+model Reseller {
+  id           String   @id @default(uuid())
+  resellerCode String   @unique
+  oemName      String
+  companyName  String
+  contactName  String?
+  mobile       String?
+  email        String?
+  city         String?
+  state        String?
+  pincode      String
+  status       String
+  createdAt    DateTime @default(now())
+
+  vouchers           Voucher[]
+  orderBeneficiaries OrderBeneficiary[] // ✅ ADD THIS LINE
+}
+
+model Beneficiary {
+  id            String   @id @default(uuid())
+  beneficiaryId String   @unique
+  name          String
+  mobile        String
+  email         String?
+  city          String?
+  pincode       String?
+  createdAt     DateTime @default(now())
+
+  vouchers      Voucher[]
+  orderMappings OrderBeneficiary[]
+}
+
+model Voucher {
+  id               String    @id @default(uuid())
+  voucherId        String    @unique
+  orderId          String
+  beneficiaryId    String
+  sellerId         String
+  mappedResellerId String
+  value            Float
+  expiryDate       DateTime
+  status           String
+  paymentStatus    String
+  createdAt        DateTime  @default(now())
+  redeemedAt       DateTime?
+
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [beneficiaryId])
+  reseller    Reseller    @relation(fields: [mappedResellerId], references: [resellerCode])
+  order       Order       @relation(fields: [orderId], references: [orderId])
+}
+
+model OrderBeneficiary {
+  id               String   @id @default(uuid())
+  orderId          String
+  sellerId         String?
+  beneficiaryId    String
+  voucherStatus    String
+  mappedResellerId String? // ✅ add this
+  createdAt        DateTime @default(now())
+
+  beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [beneficiaryId])
+  order       Order       @relation(fields: [orderId], references: [orderId])
+
+  reseller Reseller? @relation(fields: [mappedResellerId], references: [resellerCode])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  username  String   @unique
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+}
