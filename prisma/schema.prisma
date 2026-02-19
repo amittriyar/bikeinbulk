@@ -6,9 +6,6 @@ datasource db {
   provider = "postgresql"
 }
 
-
-
-
 model RFQ {
   id        String   @id @default(uuid())
   rfqId     String   @unique
