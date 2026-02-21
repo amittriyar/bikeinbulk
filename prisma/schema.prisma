@@ -115,12 +115,18 @@ model OrderBeneficiary {
 
   reseller Reseller? @relation(fields: [mappedResellerId], references: [resellerCode])
 }
+enum Role {
+  BUYER
+  SELLER
+  ADMIN
+}
 
 model User {
   id        String   @id @default(uuid())
   userId    String   @unique
   username  String   @unique
   password  String
-  role      String
+  role      Role
   createdAt DateTime @default(now())
 }
+

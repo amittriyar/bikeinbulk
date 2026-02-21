@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb } from '@/lib/db';   // ✅ THIS LINE
 import bcrypt from 'bcrypt';
-
-export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   const db = getDb();
@@ -13,6 +11,15 @@ export async function POST(req: Request) {
   if (!username || !password || !role) {
     return NextResponse.json(
       { success: false, message: 'Missing fields' },
+      { status: 400 }
+    );
+  }
+
+  const allowedRoles = ['BUYER', 'SELLER'];
+
+  if (!allowedRoles.includes(role)) {
+    return NextResponse.json(
+      { success: false, message: 'Invalid role' },
       { status: 400 }
     );
   }
@@ -39,5 +46,9 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ success: true, user });
+  return NextResponse.json({
+    success: true,
+    userId: user.userId,
+    role: user.role,
+  });
 }
