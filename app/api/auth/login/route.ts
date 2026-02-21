@@ -1,52 +1,50 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { authenticateUser } from '@/lib/authStore';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
-
 export async function POST(req: Request) {
-  const db = getDb();  // initialize once per request
-
   const body = await req.json();
   const { username, password } = body;
 
-  const user = await db.user.findUnique({
-    where: { username },
-  });
+  const result = await authenticateUser(username, password);
 
-
-  if (!user) {
+  if (!result.success) {
     return NextResponse.json(
-      { error: 'Invalid credentials' },
+      { error: result.message },
       { status: 401 }
     );
   }
 
-  const valid = await bcrypt.compare(password, user.password);
-
-  if (!valid) {
-    return NextResponse.json(
-      { error: 'Invalid credentials' },
-      { status: 401 }
-    );
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET not configured');
   }
 
   const token = jwt.sign(
     {
-      userId: user.userId,
-      role: user.role,
+      userId: result.userId,
+      role: result.role,
     },
-    JWT_SECRET,
+    process.env.JWT_SECRET,
     { expiresIn: '1d' }
   );
 
-  return NextResponse.json({
-    success: true,
-    token,
-    role: user.role,
-  });
+  const response = NextResponse.json({
+  success: true,
+  role: result.role,
+
+});
+
+response.cookies.set('token', token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'strict',
+  path: '/',
+  maxAge: 60 * 60 * 24,
+});
+
+return response;
+
 }
