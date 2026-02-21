@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';   // ✅ THIS LINE
 import bcrypt from 'bcrypt';
 
+export const runtime = 'nodejs';
+
+
 export async function POST(req: Request) {
   const db = getDb();
   const body = await req.json();

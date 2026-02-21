@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import TopNav from '@/components/ui/TopNav'
+
+
 
 /* ================= TYPES ================= */
 
@@ -100,6 +103,8 @@ export default function BuyersDashboard() {
   const [fuelType, setFuelType] = useState('');
   const [sortPrice, setSortPrice] = useState('');
 
+
+
   /* ================= FILTER OPTIONS ================= */
 
   const brands = useMemo(
@@ -138,8 +143,8 @@ export default function BuyersDashboard() {
             (budget === 'Below 1L'
               ? p.price < 100000
               : budget === '1L - 1.5L'
-              ? p.price >= 100000 && p.price <= 150000
-              : p.price > 150000))
+                ? p.price >= 100000 && p.price <= 150000
+                : p.price > 150000))
       )
       .sort((a: Product, b: Product) => {
         if (sortPrice === 'Low-High') return a.price - b.price;
@@ -166,15 +171,18 @@ export default function BuyersDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">GiftConnect – Buyers Dashboard</h1>
-        <a
-          href="/"
-          className="bg-white text-blue-600 px-4 py-2 rounded text-sm font-semibold"
-        >
-          Corporate Gifting
-        </a>
-      </header>
+      <TopNav />
+
+      {/* Page Heading */}
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="mb-10"></div>
+        <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          Explore OEM Products & Catalogue
+        </h1>
+        <p className="text-gray-500 mt-2 text-sm">
+          Filter, compare and create RFQs seamlessly.
+        </p>
+      
 
       <section className="p-6">
         {/* FILTERS */}
@@ -319,5 +327,7 @@ export default function BuyersDashboard() {
         © 2026 GiftConnect
       </footer>
     </div>
-  );
+    </div>
+      );
+      
 }

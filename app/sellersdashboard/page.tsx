@@ -362,7 +362,14 @@ export default function SellersDashboard() {
       <TopNav />
 
       <div className="min-h-screen bg-gray-50 p-8">
-        <h1 className="text-3xl font-bold mb-6">Sellers Dashboard</h1>
+        <div className="mb-10">
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Sellers Dashboard
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm">
+            Manage Catalogue, RFQs, Resellers and Voucher Issuance
+          </p>
+        </div>
 
         {/* KPI */}
         <div className="grid grid-cols-4 gap-6 mb-10">

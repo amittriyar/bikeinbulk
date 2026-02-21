@@ -1,94 +1,40 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import GCLogo from '@/components/GCLogo';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import GCLogo from '@/components/GCLogo'
 export default function TopNav() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
-
-      if (data.authenticated) {
-        setUser(data.user);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const router = useRouter()
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    setUser(null);
-    router.push('/login');
-  };
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/')
+  }
 
   return (
-    <nav className="bg-indigo-700 text-white px-6 py-4 flex items-center gap-6">
-      
-      {/* GC LOGO */}
-      <Link href="/" className="flex items-center gap-2">
+    <nav className="bg-gradient-to-r from-indigo-700 to-blue-700 text-white px-8 py-4 flex items-center justify-between shadow-md">
+
+      {/* LEFT - LOGO */}
+      <Link href="/" className="hover:opacity-90 transition">
         <GCLogo />
       </Link>
+      {/* RIGHT - NAV */}
+      <div className="flex items-center gap-8 text-sm font-medium">
+        <Link href="/buyers" className="hover:text-gray-200 transition">
+          Buyers
+        </Link>
 
-      {/* NAV LINKS */}
-      <Link href="/" className="hover:underline">
-        Home
-      </Link>
+        <Link href="/sellersdashboard" className="hover:text-gray-200 transition">
+          Sellers
+        </Link>
 
-      <Link href="/buyers" className="hover:underline">
-        Buyers
-      </Link>
-
-      <Link href="/sellersdashboard" className="hover:underline">
-        Sellers
-      </Link>
-
-      {/* RIGHT SIDE */}
-      <div className="ml-auto flex gap-4 items-center relative">
-        
-        {!user ? (
-          <>
-            <Link href="/login" className="hover:underline">
-              Login
-            </Link>
-
-            <Link
-              href="/signup"
-              className="bg-white text-indigo-700 px-3 py-1 rounded hover:bg-indigo-100"
-            >
-              Sign Up
-            </Link>
-          </>
-        ) : (
-          <div>
-            <button
-              onClick={() => setOpen(!open)}
-              className="bg-white/10 px-4 py-2 rounded hover:bg-white/20"
-            >
-              Account ▾
-            </button>
-
-            {open && (
-              <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow-lg">
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
+        <button
+          onClick={handleLogout}
+          className="bg-white text-indigo-700 px-4 py-1.5 rounded-full font-semibold hover:bg-gray-200 transition"
+        >
+          Logout
+        </button>
       </div>
     </nav>
-  );
+  )
 }

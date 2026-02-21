@@ -6,45 +6,71 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { username, password } = body;
+  try {
+    const body = await req.json();
+    const { username, password } = body;
 
-  const result = await authenticateUser(username, password);
+    // 🔹 Basic validation
+    if (!username || !password) {
+      return NextResponse.json(
+        { success: false, error: 'Username and password are required' },
+        { status: 400 }
+      );
+    }
 
-  if (!result.success) {
+    // 🔹 Authenticate user
+    const result = await authenticateUser(username, password);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.message },
+        { status: 401 }
+      );
+    }
+
+    // 🔹 Ensure JWT secret exists
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
+
+    // 🔹 Create token
+    const token = jwt.sign(
+      {
+        userId: result.userId,
+        role: result.role,
+      },
+      secret,
+      { expiresIn: '1d' }
+    );
+
+    // 🔹 Prepare response
+    const response = NextResponse.json({
+      success: true,
+      role: result.role,
+      userId: result.userId,
+    });
+
+    // 🔹 Set cookie (works locally + in Vercel)
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // 🔥 critical
+      sameSite: 'lax', // slightly safer than strict for redirects
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error('Login error:', error);
+
     return NextResponse.json(
-      { error: result.message },
-      { status: 401 }
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
     );
   }
-
-  if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET not configured');
-  }
-
-  const token = jwt.sign(
-    {
-      userId: result.userId,
-      role: result.role,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '1d' }
-  );
-
-  const response = NextResponse.json({
-  success: true,
-  role: result.role,
-
-});
-
-response.cookies.set('token', token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'strict',
-  path: '/',
-  maxAge: 60 * 60 * 24,
-});
-
-return response;
-
 }
