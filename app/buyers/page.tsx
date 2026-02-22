@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Users, Ticket, IndianRupee, TrendingUp } from "lucide-react";
 import TopNav from '@/components/ui/TopNav'
-
+import * as XLSX from "xlsx";
 
 
 export default function BuyersDashboard() {
@@ -18,6 +18,12 @@ export default function BuyersDashboard() {
   const [showBidModal, setShowBidModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [vouchers, setVouchers] = useState<any[]>([]);
+
+  const [compareModels, setCompareModels] = useState<any[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [beneficiaryUploadData, setBeneficiaryUploadData] = useState<any[]>([]);
+
+
 
   const fetchVouchers = async () => {
     try {
@@ -48,9 +54,9 @@ export default function BuyersDashboard() {
         ...prev,
         {
           catalogueId: product.id,
-          modelName: product.model,
-          requestedQty: 1,
-          locations: [],
+          modelName: product.modelName,
+          requestedQty: product.moq || 1,
+          locations: [{ city: '', qty: '' }], // 🔥 per product
         }
       ]);
     } else {
@@ -81,7 +87,15 @@ export default function BuyersDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rfqDraftActive, setRfqDraftActive] = useState(true);
 
-
+  const [budgetForm, setBudgetForm] = useState({
+    fuelType: '',
+    vehicleType: '',
+    minBudget: '',
+    maxBudget: '',
+    minSpec: '',
+    maxSpec: '',
+    locations: [{ city: '', qty: '' }]
+  });
 
 
 
@@ -160,19 +174,31 @@ export default function BuyersDashboard() {
   };
 
   const submitRFQ = async () => {
-    if (submitting || rfqItems.length === 0) return;
+    if (submitting) return;
 
+    if (rfqMode === 'MODEL' && rfqItems.length === 0) return;
+
+    if (rfqMode === 'BUDGET' && totalBudgetQty === 0) return;
     setSubmitting(true);
 
     const payload = {
       buyerId: 'BUYER_001',
       rfqType: rfqMode,
-      items: rfqItems.map((p: any) => ({
-        catalogueId: p.catalogueId,
-        modelName: p.modelName,
-        requestedQty: p.requestedQty || 1,
-        locations: p.locations || [],
-      })),
+      items:
+        rfqMode === 'MODEL'
+          ? rfqItems
+          : [
+            {
+              fuelType: budgetForm.fuelType,
+              vehicleType: budgetForm.vehicleType,
+              minSpec: budgetForm.minSpec,
+              maxSpec: budgetForm.maxSpec,
+              minBudget: budgetForm.minBudget,
+              maxBudget: budgetForm.maxBudget,
+              requestedQty: totalBudgetQty,
+              locations: budgetForm.locations
+            }
+          ]
     };
 
     try {
@@ -201,6 +227,11 @@ export default function BuyersDashboard() {
       setSubmitting(false);
     }
   };
+
+  const totalBudgetQty = budgetForm.locations.reduce(
+    (sum, loc) => sum + Number(loc.qty || 0),
+    0
+  );
   const downloadRFQPdf = async (rfqId: string) => {
     const res = await fetch("/api/rfq/pdf", {
       method: "POST",
@@ -391,7 +422,50 @@ export default function BuyersDashboard() {
     }
   };
 
+  const handleBeneficiaryExcel = (file: File) => {
+    const reader = new FileReader();
 
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+      const cleaned = rows.map((r) => ({
+        name: String(r.Name || "").trim(),
+        mobile: String(r.Mobile || "").trim(),
+        email: String(r.Email || "").trim(),
+        city: String(r.City || "").trim(),
+        pincode: String(r.Pincode || "").trim(),
+      }));
+
+      setBeneficiaryUploadData(cleaned);
+
+      // 🚀 Immediately upload using existing API logic
+      for (const b of cleaned) {
+        await fetch("/api/buyer/order/beneficiaries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: selectedOrder.orderId,
+            sellerId: selectedOrder.sellerId,
+            ...b,
+          }),
+        });
+      }
+
+      // Refresh list
+      const updated = await fetch(
+        `/api/buyer/order/beneficiaries?orderId=${selectedOrder.orderId}`
+      );
+      const dataUpdated = await updated.json();
+      setOrderBeneficiaries(dataUpdated);
+
+      alert("Beneficiaries uploaded successfully");
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
   return (
     <>
       <TopNav />
@@ -500,7 +574,7 @@ export default function BuyersDashboard() {
                         <th>Fuel</th>
                         <th>Indicative Price</th>
                         <th>MOQ</th>
-                        <th>Action</th>
+                        <th>Compare</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -519,13 +593,30 @@ export default function BuyersDashboard() {
                             <td>{p.fuelType || '—'}</td>
                             <td>₹ {p.exShowroomPrice?.toLocaleString()}</td>
                             <td>{p.moq}</td>
-                            <td>
-                              <button
-                                className="text-indigo-600 hover:underline"
-                                onClick={() => addToRFQ(p)}
-                              >
-                                Add to RFQ
-                              </button>
+                            <td className="text-center">
+                              <input
+                                type="checkbox"
+                                checked={compareModels.some(m => m.id === p.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    if (compareModels.length >= 3) {
+                                      alert("Maximum 3 models allowed for comparison");
+                                      return;
+                                    }
+
+                                    const updated = [...compareModels, p];
+                                    setCompareModels(updated);
+
+                                    if (updated.length === 3) {
+                                      setShowCompareModal(true);
+                                    }
+                                  } else {
+                                    setCompareModels(prev =>
+                                      prev.filter(m => m.id !== p.id)
+                                    );
+                                  }
+                                }}
+                              />
                             </td>
                           </tr>
                         ))
@@ -609,45 +700,67 @@ export default function BuyersDashboard() {
                           </table>
                         </div>
 
-                        <h4 className="font-medium mb-2">Location-wise Quantity</h4>
-                        <table className="w-full text-sm mb-4">
-                          <thead>
-                            <tr>
-                              <th>City</th>
-                              <th>Quantity</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {locationRows.map((row, idx) => (
-                              <tr key={idx} className="border-t">
-                                <td>
-                                  <input
-                                    className="border p-1 w-full"
-                                    placeholder="City"
-                                    value={row.city}
-                                    onChange={e => {
-                                      const updated = [...locationRows];
-                                      updated[idx] = { ...row, city: e.target.value };
-                                      setLocationRows(updated);
-                                    }}
-                                  />
-                                </td>
-                                <td>
-                                  <input
-                                    className="border p-1 w-full"
-                                    placeholder="Qty"
-                                    value={row.qty}
-                                    onChange={e => {
-                                      const updated = [...locationRows];
-                                      updated[idx] = { ...row, qty: e.target.value };
-                                      setLocationRows(updated);
-                                    }}
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        <h4 className="font-medium mb-4">Location-wise Quantity (Per Product)</h4>
+
+                        {rfqItems.map((item, itemIndex) => (
+                          <div key={item.catalogueId} className="border rounded-lg p-4 mb-4">
+
+                            <h5 className="font-semibold mb-3">
+                              {item.modelName}
+                            </h5>
+
+                            <table className="w-full text-sm mb-4">
+                              <thead>
+                                <tr>
+                                  <th>City</th>
+                                  <th>Quantity</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {item.locations.map((loc: any, locIndex: number) => (
+                                  <tr key={locIndex} className="border-t">
+                                    <td>
+                                      <input
+                                        className="border p-1 w-full"
+                                        placeholder="City"
+                                        value={loc.city}
+                                        onChange={e => {
+                                          const updated = [...rfqItems];
+                                          updated[itemIndex].locations[locIndex].city = e.target.value;
+                                          setRfqItems(updated);
+                                        }}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        className="border p-1 w-full"
+                                        placeholder="Qty"
+                                        type="number"
+                                        value={loc.qty}
+                                        onChange={e => {
+                                          const updated = [...rfqItems];
+                                          updated[itemIndex].locations[locIndex].qty = e.target.value;
+                                          setRfqItems(updated);
+                                        }}
+                                      />
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const updated = [...rfqItems];
+                                updated[itemIndex].locations.push({ city: '', qty: '' });
+                                setRfqItems(updated);
+                              }}
+                            >
+                              + Add Location
+                            </Button>
+
+                          </div>
+                        ))}
 
                         <div className="flex items-center gap-4 mb-6">
                           <Button
@@ -667,15 +780,135 @@ export default function BuyersDashboard() {
                     )}
 
                     {rfqMode === 'BUDGET' && (
-                      <div className="grid md:grid-cols-2 gap-4 mb-6">
-                        <input className="border p-2" placeholder="Min Budget (₹)" />
-                        <input className="border p-2" placeholder="Max Budget (₹)" />
-                        <input className="border p-2" placeholder="Total Quantity" />
-                        <select className="border p-2">
-                          <option>Any Category</option>
-                          <option>EV Scooter</option>
-                          <option>Motorcycle</option>
-                        </select>
+                      <div className="border rounded-lg p-4 space-y-4 mb-6">
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <select
+                            className="border p-2 rounded"
+                            value={budgetForm.fuelType}
+                            onChange={e => setBudgetForm({ ...budgetForm, fuelType: e.target.value })}
+                          >
+                            <option value="">Select Fuel Type</option>
+                            <option value="ICE">ICE</option>
+                            <option value="EV">EV</option>
+                          </select>
+
+                          <select
+                            className="border p-2 rounded"
+                            value={budgetForm.vehicleType}
+                            onChange={e => setBudgetForm({ ...budgetForm, vehicleType: e.target.value })}
+                          >
+                            <option value="">Select Vehicle Type</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                            <option value="Scooter">Scooter</option>
+                          </select>
+                        </div>
+
+                        {budgetForm.fuelType === 'ICE' && (
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <input
+                              className="border p-2 rounded"
+                              placeholder="Min Engine Capacity (CC)"
+                              value={budgetForm.minSpec}
+                              onChange={e => setBudgetForm({ ...budgetForm, minSpec: e.target.value })}
+                            />
+                            <input
+                              className="border p-2 rounded"
+                              placeholder="Max Engine Capacity (CC)"
+                              value={budgetForm.maxSpec}
+                              onChange={e => setBudgetForm({ ...budgetForm, maxSpec: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        {budgetForm.fuelType === 'EV' && (
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <input
+                              className="border p-2 rounded"
+                              placeholder="Min Motor Power (kW)"
+                              value={budgetForm.minSpec}
+                              onChange={e => setBudgetForm({ ...budgetForm, minSpec: e.target.value })}
+                            />
+                            <input
+                              className="border p-2 rounded"
+                              placeholder="Max Motor Power (kW)"
+                              value={budgetForm.maxSpec}
+                              onChange={e => setBudgetForm({ ...budgetForm, maxSpec: e.target.value })}
+                            />
+                          </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <input
+                            className="border p-2 rounded"
+                            placeholder="Min Budget (₹)"
+                            value={budgetForm.minBudget}
+                            onChange={e => setBudgetForm({ ...budgetForm, minBudget: e.target.value })}
+                          />
+                          <input
+                            className="border p-2 rounded"
+                            placeholder="Max Budget (₹)"
+                            value={budgetForm.maxBudget}
+                            onChange={e => setBudgetForm({ ...budgetForm, maxBudget: e.target.value })}
+                          />
+                        </div>
+                        <h4 className="font-medium mt-4 mb-2">Location-wise Quantity</h4>
+
+                        <table className="w-full text-sm mb-4">
+                          <thead>
+                            <tr>
+                              <th>City</th>
+                              <th>Quantity</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {budgetForm.locations.map((loc, idx) => (
+                              <tr key={idx} className="border-t">
+                                <td>
+                                  <input
+                                    className="border p-1 w-full"
+                                    placeholder="City"
+                                    value={loc.city}
+                                    onChange={e => {
+                                      const updated = [...budgetForm.locations];
+                                      updated[idx].city = e.target.value;
+                                      setBudgetForm({ ...budgetForm, locations: updated });
+                                    }}
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    className="border p-1 w-full"
+                                    placeholder="Qty"
+                                    value={loc.qty}
+                                    onChange={e => {
+                                      const updated = [...budgetForm.locations];
+                                      updated[idx].qty = e.target.value;
+                                      setBudgetForm({ ...budgetForm, locations: updated });
+                                    }}
+                                  />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            setBudgetForm({
+                              ...budgetForm,
+                              locations: [...budgetForm.locations, { city: '', qty: '' }]
+                            })
+                          }
+                        >
+                          + Add Location
+                        </Button>
+                        <p className="mt-2 text-sm text-gray-600">
+                          Total Quantity: <strong>{totalBudgetQty}</strong>
+                        </p>
+
                       </div>
                     )}
 
@@ -683,7 +916,15 @@ export default function BuyersDashboard() {
                       <Button
                         className="bg-indigo-600 hover:bg-indigo-700"
                         onClick={submitRFQ}
-                        disabled={submitting || !rfqDraftActive || rfqItems.length === 0}
+                        disabled={
+                          submitting ||
+                          !rfqDraftActive ||
+                          (
+                            rfqMode === 'MODEL'
+                              ? rfqItems.length === 0
+                              : totalBudgetQty === 0
+                          )
+                        }
                       >
                         {submitting ? "Submitting..." : "Submit RFQ"}
                       </Button>
@@ -734,7 +975,13 @@ export default function BuyersDashboard() {
                           <tr key={r.rfqId} className="border-t">
                             <td>{r.rfqId}</td>
                             <td>{r.rfqType}</td>
-                            <td>{r.items?.map((i: any) => i.modelName).join(', ') || '—'}</td>
+                            <td>
+                              {r.rfqType === 'MODEL'
+                                ? r.items?.map((i: any) => i.modelName).join(', ')
+                                : `${r.items?.[0]?.fuelType} ${r.items?.[0]?.vehicleType} 
+       (${r.items?.[0]?.minSpec}-${r.items?.[0]?.maxSpec})`
+                              }
+                            </td>
                             <td>
                               {r.items?.reduce((sum: number, i: any) => sum + Number(i.requestedQty || 0), 0) || 0}
                             </td>
@@ -953,7 +1200,83 @@ export default function BuyersDashboard() {
           {/* ────────────────────────────────────────────── */}
           {/*               MODALS (all of them)              */}
           {/* ────────────────────────────────────────────── */}
+          {showCompareModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+              <div className="bg-white w-full max-w-6xl rounded-xl p-6 max-h-[90vh] overflow-y-auto">
 
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold">Model Comparison</h2>
+                  <button
+                    className="text-gray-500 text-xl"
+                    onClick={() => setShowCompareModal(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <table className="w-full text-sm border">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="p-3 text-left">Specification</th>
+                      {compareModels.map(m => (
+                        <th key={m.id} className="p-3 text-center">
+                          {m.modelName}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr className="border-t">
+                      <td className="p-2 font-medium">OEM</td>
+                      {compareModels.map(m => (
+                        <td key={m.id} className="p-2 text-center">
+                          {m.oemName}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-t">
+                      <td className="p-2 font-medium">Fuel Type</td>
+                      {compareModels.map(m => (
+                        <td key={m.id} className="p-2 text-center">
+                          {m.fuelType}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-t">
+                      <td className="p-2 font-medium">Engine Capacity</td>
+                      {compareModels.map(m => (
+                        <td key={m.id} className="p-2 text-center">
+                          {m.engineCapacity || "—"}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-t">
+                      <td className="p-2 font-medium">Indicative Price</td>
+                      {compareModels.map(m => (
+                        <td key={m.id} className="p-2 text-center">
+                          ₹{m.exShowroomPrice?.toLocaleString()}
+                        </td>
+                      ))}
+                    </tr>
+
+                    <tr className="border-t">
+                      <td className="p-2 font-medium">MOQ</td>
+                      {compareModels.map(m => (
+                        <td key={m.id} className="p-2 text-center">
+                          {m.moq}
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+
+              </div>
+            </div>
+          )}
           {/* Order Summary Modal */}
           {showOrderSummary && (
             <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -1000,7 +1323,14 @@ export default function BuyersDashboard() {
                   <div className="grid md:grid-cols-2 gap-6 mb-8">
                     <div className="border rounded-lg p-5">
                       <h4 className="font-medium mb-3">Upload Beneficiaries via Excel</h4>
-                      <input type="file" accept=".xlsx,.xls" className="mb-2 block w-full" />
+                      <input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        className="mb-2 block w-full"
+                        onChange={(e) =>
+                          e.target.files && handleBeneficiaryExcel(e.target.files[0])
+                        }
+                      />
                       <p className="text-xs text-gray-500">
                         Columns: Name, Mobile, Email, City, Pincode
                       </p>

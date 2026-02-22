@@ -82,7 +82,10 @@ export default function SellersDashboard() {
 
   const [catalogue, setCatalogue] = useState<any[]>([]);
   const [loadingCatalogue, setLoadingCatalogue] = useState(true);
-
+  const [uploadedProducts, setUploadedProducts] = useState<any[]>([]);
+  const [previewErrors, setPreviewErrors] = useState<any[]>([]);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState<any>({
     modelName: '',
     category: '',
@@ -138,7 +141,15 @@ export default function SellersDashboard() {
         sellerId: 'SELLER_001',
         sellerName: 'Seller OEM',
 
-        quotedUnitPrice: Number(bidForm.quotedUnitPrice),
+        locationQuotes: selectedRfq.items.map((item: any) => ({
+          modelName: item.modelName,
+          locations: item.locations.map((loc: any) => ({
+            city: loc.city,
+            qty: loc.qty,
+            quotedPrice: loc.quotedPrice
+          }))
+        })),
+
         moq: Number(bidForm.moq),
         deliveryTimeline: bidForm.deliveryTimeline,
         validityDays: Number(bidForm.validityDays),
@@ -218,8 +229,55 @@ export default function SellersDashboard() {
 
     await fetchCatalogue();
   };
-  const handleProductExcel = (file: File) => {
-    console.log('Product Excel uploaded:', file.name);
+  const handleProductExcel = async (file: File) => {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      const validRows: any[] = [];
+      const errors: any[] = [];
+
+      rows.forEach((r, index) => {
+        const rowNumber = index + 2; // Excel row number
+
+        const product = {
+          oemName: String(r.OEMName || '').trim(),
+          modelName: String(r.ModelName || '').trim(),
+          category: String(r.Category || '').trim(),
+          fuelType: String(r.FuelType || '').trim(),
+          engineCapacity: String(r.EngineCapacity || '').trim(),
+          exShowroomPrice: Number(r.ExShowroomPrice),
+          moq: Number(r.MOQ),
+        };
+
+        if (!product.modelName || !product.oemName) {
+          errors.push({ row: rowNumber, message: "OEM Name and Model Name required" });
+          return;
+        }
+
+        if (isNaN(product.exShowroomPrice) || product.exShowroomPrice <= 0) {
+          errors.push({ row: rowNumber, message: "Invalid price" });
+          return;
+        }
+
+        if (isNaN(product.moq) || product.moq <= 0) {
+          errors.push({ row: rowNumber, message: "Invalid MOQ" });
+          return;
+        }
+
+        validRows.push(product);
+      });
+
+      setUploadedProducts(validRows);
+      setPreviewErrors(errors);
+      setShowPreviewModal(true);
+    };
+
+    reader.readAsArrayBuffer(file);
   };
   const handleResellerExcel = async (file: File) => {
     const reader = new FileReader();
@@ -480,34 +538,55 @@ export default function SellersDashboard() {
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="p-2 text-left">Model</th>
-                    <th className="p-2">Requested Qty</th>
-                    <th className="p-2">Quoted Unit Price (₹)</th>
+                    <th className="p-2 text-left">City</th>
+                    <th className="p-2 text-center">Qty</th>
+                    <th className="p-2 text-left">Quoted Unit Price (₹)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedRfq.items.map((item: any, idx: number) => (
-                    <tr key={idx} className="border-t">
-                      <td className="p-2">{item.modelName}</td>
-                      <td className="p-2 text-center">{item.requestedQty}</td>
-                      <td className="p-2">
-                        <input
-                          type="number"
-                          className="border p-1 w-full"
-                          placeholder="Enter price"
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            setSelectedRfq((prev: any) => ({
-                              ...prev,
-                              items: prev.items.map((it: any, i: number) =>
-                                i === idx ? { ...it, quotedPrice: value } : it
-                              )
-                            }));
-                          }}
+                  {selectedRfq.items.map((item: any, itemIdx: number) =>
+                    (item.locations || []).map((loc: any, locIdx: number) => (
+                      <tr key={`${itemIdx}-${locIdx}`} className="border-t">
 
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                        {/* Model */}
+                        <td className="p-2">
+                          {item.modelName || `${item.fuelType} ${item.vehicleType}`}
+                        </td>
+
+                        {/* City */}
+                        <td className="p-2">
+                          {loc.city}
+                        </td>
+
+                        {/* Quantity */}
+                        <td className="p-2 text-center">
+                          {loc.qty}
+                        </td>
+
+                        {/* Quoted Price */}
+                        <td className="p-2">
+                          <input
+                            type="number"
+                            className="border p-1 w-full"
+                            placeholder="Enter price"
+                            value={loc.quotedPrice || ''}
+                            onChange={(e) => {
+                              const value = Number(e.target.value);
+
+                              setSelectedRfq((prev: any) => {
+                                const updated = { ...prev };
+
+                                updated.items[itemIdx].locations[locIdx].quotedPrice = value;
+
+                                return updated;
+                              });
+                            }}
+                          />
+                        </td>
+
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
 
@@ -685,6 +764,91 @@ export default function SellersDashboard() {
           </div>
         )}
 
+        {showPreviewModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white w-full max-w-6xl rounded-xl p-6 max-h-[90vh] overflow-y-auto">
+
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Catalogue Upload Preview</h2>
+                <button onClick={() => setShowPreviewModal(false)}>✕</button>
+              </div>
+
+              {previewErrors.length > 0 && (
+                <div className="bg-red-50 p-4 rounded mb-4">
+                  <h3 className="font-medium text-red-600">Errors Found</h3>
+                  {previewErrors.map((e, i) => (
+                    <div key={i} className="text-sm text-red-500">
+                      Row {e.row}: {e.message}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <table className="w-full text-sm border mb-6">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th>OEM</th>
+                    <th>Model</th>
+                    <th>Category</th>
+                    <th>Fuel</th>
+                    <th>Engine</th>
+                    <th>Price</th>
+                    <th>MOQ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploadedProducts.map((p, i) => (
+                    <tr key={i} className="border-t">
+                      <td>{p.oemName}</td>
+                      <td>{p.modelName}</td>
+                      <td>{p.category}</td>
+                      <td>{p.fuelType}</td>
+                      <td>{p.engineCapacity}</td>
+                      <td>₹{p.exShowroomPrice}</td>
+                      <td>{p.moq}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-end gap-4">
+                <button
+                  className="px-4 py-2 border rounded"
+                  onClick={() => setShowPreviewModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  className="px-4 py-2 bg-indigo-600 text-white rounded"
+                  disabled={uploadedProducts.length === 0}
+                  onClick={async () => {
+                    setUploading(true);
+
+                    for (const p of uploadedProducts) {
+                      await fetch('/api/seller/catalogue', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          ...p,
+                          status: 'PUBLISHED'
+                        }),
+                      });
+                    }
+
+                    await fetchCatalogue();
+                    setUploading(false);
+                    setShowPreviewModal(false);
+                  }}
+                >
+                  {uploading ? "Publishing..." : "Publish Valid Rows"}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* ================= RFQS ================= */}
         {tab === 'rfqs' && USER_ROLE === 'seller' && (
           <div className="bg-white p-6 rounded-xl shadow">
@@ -711,17 +875,37 @@ export default function SellersDashboard() {
                   </tr>
                 ) : (
                   sellerRFQs.map((r: any) => {
+
                     const items = Array.isArray(r.items) ? r.items : [];
 
-                    const models = items
-                      .map((i: any) => i.modelName || '—')
-                      .join(', ');
+                    let scopeDisplay = '';
+                    let totalQty = 0;
 
-                    const totalQty = items.reduce(
-                      (sum: number, i: any) =>
-                        sum + Number(i.requestedQty || 0),
-                      0
-                    );
+                    if (r.rfqType === 'MODEL') {
+                      scopeDisplay = items
+                        .map((i: any) => i.modelName || '—')
+                        .join(', ');
+
+                      totalQty = items.reduce((sum: number, i: any) => {
+                        const locQty = (i.locations || []).reduce(
+                          (s: number, l: any) => s + Number(l.qty || 0),
+                          0
+                        );
+                        return sum + locQty;
+                      }, 0);
+
+                    } else {
+                      const b = items[0] || {};
+
+                      scopeDisplay = `${b.fuelType || ''} ${b.vehicleType || ''} 
+      (${b.minSpec || ''}-${b.maxSpec || ''})`;
+
+                      totalQty = (b.locations || []).reduce(
+                        (sum: number, l: any) => sum + Number(l.qty || 0),
+                        0
+                      );
+                    }
+
 
                     return (
                       <tr key={r.rfqId} className="border-t">
@@ -729,8 +913,7 @@ export default function SellersDashboard() {
 
                         <td className="p-2">{r.rfqType}</td>
 
-                        <td className="p-2">{models || '—'}</td>
-
+                        <td className="p-2">{scopeDisplay || '—'}</td>
                         <td className="p-2">{totalQty}</td>
 
                         <td className="p-2">

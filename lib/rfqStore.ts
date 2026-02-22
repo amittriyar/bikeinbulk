@@ -6,10 +6,23 @@ import { getDb } from './db';
 
 
 export type RFQItem = {
+  // MODEL RFQ
   catalogueId?: string;
   modelName?: string;
+
+  // BUDGET RFQ
+  fuelType?: string;
+  vehicleType?: string;
+  minSpec?: string;
+  maxSpec?: string;
+  minBudget?: string;
+  maxBudget?: string;
+
   requestedQty?: number;
-  locations?: any[];
+  locations?: {
+    city: string;
+    qty: number;
+  }[];
 };
 
 export type RFQ = {
@@ -28,15 +41,15 @@ export type RFQ = {
 export async function writeRFQ(rfq: RFQ) {
   const db = getDb();
   await db.rFQ.create({
-  data: {
-    rfqId: rfq.rfqId,
-    buyerId: rfq.buyerId,
-    rfqType: rfq.rfqType,
-    items: rfq.items,
-    status: rfq.status,
-    bids: [],   // 🔥 Add this if missing
-  },
-});
+    data: {
+      rfqId: rfq.rfqId,
+      buyerId: rfq.buyerId,
+      rfqType: rfq.rfqType,
+      items: rfq.items,
+      status: rfq.status,
+      bids: [],   // 🔥 Add this if missing
+    },
+  });
 
 }
 
@@ -89,11 +102,11 @@ export async function appendBidToRFQ(rfqId: string, bid: any) {
   existingBids.push(bid);
 
   await db.rFQ.update({
-  where: { rfqId },
-  data: {
-    bids: [...existingBids],  // 🔥 Important fix
-    status: 'RESPONDED',
-  },
-});
+    where: { rfqId },
+    data: {
+      bids: [...existingBids],  // 🔥 Important fix
+      status: 'RESPONDED',
+    },
+  });
 
 }
