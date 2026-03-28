@@ -68,19 +68,152 @@ export default function SellersDashboard() {
     | null
     | 'respondRFQ'
     | 'viewOrder'
-    | 'issueVoucher';
+    | 'issueVoucher'
+    | 'viewRFQ';
 
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const downloadCatalogue = () => {
+    const rows = catalogue.map(p =>
+      `${p.name},${p.category},${p.voucher},${p.moq},${p.status}`
+    );
+
+    const csv = "Product,Category,Voucher,MOQ,Status\n" + rows.join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "catalogue.csv";
+    a.click();
+  };
+
+  const downloadOrderPDF = async (o: any) => {
+    try {
+      const res = await fetch(`/api/documents/po/pdf?orderId=${o.orderId}`);
+
+      if (!res.ok) {
+        alert("PO not available yet");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `PO-${o.orderId}.pdf`;
+      a.click();
+
+    } catch (err) {
+      console.error("PO download error:", err);
+      alert("Error downloading PO");
+    }
+  };
   const [selectedRfq, setSelectedRfq] = useState<any | null>(null);
+
+  const downloadAllRFQs = () => {
+    const rows = sellerRFQs.map(r =>
+      `${r.rfqId},${r.buyerName},${r.rfqType},${r.status}`
+    );
+
+    const csv = "RFQ ID,Buyer,Type,Status\n" + rows.join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "all_rfqs.csv";
+    a.click();
+  };
+
+  const downloadRFQExcel = (r: any) => {
+
+    const rows = (r.items || []).map((i: any) => {
+      const locations = (i.locations || [])
+        .map((l: any) => `${l.city}:${l.qty}`)
+        .join(" | ");
+
+      return `${r.rfqId},${r.rfqType},${i.modelName || ''},${locations}`;
+    });
+
+    const csv =
+      "RFQ ID,Type,Model,Locations\n" +
+      rows.join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${r.rfqId}.csv`;
+    a.click();
+  };
+  function viewQuotation(r: any) {
+    window.open(`/api/documents/quotations/pdf?rfqId=${r.rfqId}`, "_blank");
+  }
+
+  async function downloadQuotation(rfq: any) {
+
+    const res = await fetch(`/api/documents/quotations/pdf?rfqId=${rfq.rfqId}`)
+
+    const blob = await res.blob()
+
+    const url = window.URL.createObjectURL(blob)
+
+    const a = document.createElement("a")
+
+    a.href = url
+    a.download = `Quotation-${rfq.rfqId}.pdf`
+
+    a.click()
+
+  }
+  const generateProforma = async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/documents/proforma/pdf?orderId=${orderId}`);
+
+      if (!res.ok) {
+        alert("Failed to generate proforma");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Proforma-${orderId}.pdf`;
+      a.click();
+
+      // 🔥 OPTIONAL: mark as generated (recommended)
+      await fetch("/api/order/proformaGenerated", {
+        method: "POST",
+        body: JSON.stringify({ orderId })
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Error generating proforma");
+    }
+  };
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const USER_ROLE = 'seller';
   const [tab, setTab] = useState<
     'catalogue' | 'rfqs' | 'orders' | 'beneficiaries' | 'redemptions' | 'resellers'
   >('catalogue');
 
   /* ---------- STATES ---------- */
+  const [kpiData, setKpiData] = useState({
+    activeProducts: 0,
+    openRfqs: 0,
+    liveOrders: 0,
+    issuedVouchers: 0,
+  });
 
   const [catalogue, setCatalogue] = useState<any[]>([]);
+  const [image, setImage] = useState<any>(null);
+
   const [loadingCatalogue, setLoadingCatalogue] = useState(true);
   const [uploadedProducts, setUploadedProducts] = useState<any[]>([]);
   const [previewErrors, setPreviewErrors] = useState<any[]>([]);
@@ -110,6 +243,7 @@ export default function SellersDashboard() {
   const [sellerRFQs, setSellerRFQs] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
   const [sellerOrders, setSellerOrders] = useState<any[]>([]);
+
   const [orderBeneficiaries, setOrderBeneficiaries] = useState<any[]>([]);
 
   useEffect(() => {
@@ -379,7 +513,32 @@ export default function SellersDashboard() {
     loadResellers();
   }, []);
 
+  useEffect(() => {
+    const fetchKpis = async () => {
+      const sellerId = "SELLER_001";
 
+      const [catalogueRes, rfqRes, orderRes, voucherRes] = await Promise.all([
+        fetch("/api/seller/catalogue/list"),
+        fetch("/api/seller/rfq/list"),
+        fetch(`/api/seller/order/list?sellerId=${sellerId}`),
+        fetch("/api/voucher/list"),
+      ]);
+
+      const catalogue = await catalogueRes.json();
+      const rfqs = await rfqRes.json();
+      const orders = await orderRes.json();
+      const vouchers = await voucherRes.json();
+
+      setKpiData({
+        activeProducts: catalogue.filter((c: any) => c.status === "PUBLISHED").length,
+        openRfqs: rfqs.filter((r: any) => r.status === "OPEN").length,
+        liveOrders: orders.filter((o: any) => o.status !== "CLOSED").length,
+        issuedVouchers: vouchers.filter((v: any) => v.sellerId === sellerId).length,
+      });
+    };
+
+    fetchKpis();
+  }, []);
 
   const addReseller = async () => {
     const payload = {
@@ -412,6 +571,52 @@ export default function SellersDashboard() {
     setResellers(updated);
   };
 
+  async function sendQuotation(rfq: any) {
+    try {
+
+      await fetch("/api/seller/sendQuotation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rfqId: rfq.rfqId
+        })
+      });
+
+      alert("Quotation sent to buyer");
+
+    } catch (err) {
+      alert("Failed to send quotation");
+    }
+  }
+
+  let grouped: Record<string, any[]> = {};
+
+if (orderBeneficiaries && orderBeneficiaries.length > 0) {
+  orderBeneficiaries.forEach((b: any) => {
+    const city = b.beneficiary?.city || "UNKNOWN";
+
+    if (!grouped[city]) grouped[city] = [];
+    grouped[city].push(b);
+  });
+}
+let allocationSummary: any[] = [];
+
+if (selectedOrder?.items) {
+  selectedOrder.items.forEach((model: any) => {
+    model.locations?.forEach((loc: any) => {
+      const city = loc.city;
+
+      const assigned = grouped[city]?.length || 0;
+
+      allocationSummary.push({
+        model: model.model || model.modelName,
+        city,
+        assigned,
+        required: loc.qty
+      });
+    });
+  });
+}
 
   /* ================= RENDER ================= */
 
@@ -431,13 +636,73 @@ export default function SellersDashboard() {
 
         {/* KPI */}
         <div className="grid grid-cols-4 gap-6 mb-10">
-          {KPI.map(k => (
-            <div key={k.label} className="bg-white rounded-xl shadow p-6">
-              <p className="text-sm text-gray-500">{k.label}</p>
-              <p className="text-2xl font-bold">{k.value}</p>
-            </div>
-          ))}
+          <div className="bg-white rounded-xl shadow p-6">
+            <p className="text-sm text-gray-500">Active Products</p>
+            <p className="text-2xl font-bold">{kpiData.activeProducts}</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-6">
+            <p className="text-sm text-gray-500">Open RFQs</p>
+            <p className="text-2xl font-bold">{kpiData.openRfqs}</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-6">
+            <p className="text-sm text-gray-500">Live Orders</p>
+            <p className="text-2xl font-bold">{kpiData.liveOrders}</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-6">
+            <p className="text-sm text-gray-500">Issued Vouchers</p>
+            <p className="text-2xl font-bold">{kpiData.issuedVouchers}</p>
+          </div>
         </div>
+
+        {activeModal === 'viewRFQ' && selectedRfq && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white w-[700px] max-h-[80vh] overflow-auto p-6 rounded-xl shadow-xl">
+
+              <h2 className="text-xl font-bold mb-4">RFQ Details</h2>
+
+              <p><b>RFQ ID:</b> {selectedRfq.rfqId}</p>
+              <p><b>Type:</b> {selectedRfq.rfqType}</p>
+              <p><b>Status:</b> {selectedRfq.status}</p>
+
+              <hr className="my-3" />
+
+              <h3 className="font-semibold mb-2">Items</h3>
+
+              {(selectedRfq.items || []).map((i: any, idx: number) => (
+                <div key={idx} className="border p-3 rounded mb-2">
+
+                  <p><b>Model:</b> {i.modelName || '-'}</p>
+                  <p><b>Fuel:</b> {i.fuelType || '-'}</p>
+                  <p><b>Vehicle:</b> {i.vehicleType || '-'}</p>
+
+                  <p className="mt-1"><b>Locations:</b></p>
+                  <ul className="text-sm ml-4 list-disc">
+                    {(i.locations || []).map((l: any, j: number) => (
+                      <li key={j}>
+                        {l.city} – Qty: {l.qty}
+                      </li>
+                    ))}
+                  </ul>
+
+                </div>
+              ))}
+
+              <div className="flex justify-end mt-4">
+                <button
+                  className="px-4 py-2 bg-gray-600 text-white rounded"
+                  onClick={() => setActiveModal(null)}
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* 🔥 RFQ RESPONSE MODAL */}
         {activeModal === 'respondRFQ' && selectedRfq && (
 
@@ -462,7 +727,7 @@ export default function SellersDashboard() {
 
               {/* ===== RFQ META ===== */}
               <div className="bg-gray-50 p-4 rounded mb-6 text-sm">
-                <p><strong>Buyer:</strong> {selectedRfq.buyerId}</p>
+                <p><strong>Buyer:</strong> {selectedRfq.buyerName || selectedRfq.buyerId}</p>
                 <p><strong>RFQ Type:</strong> {selectedRfq.rfqType}</p>
                 <p><strong>Status:</strong> {selectedRfq.status}</p>
               </div>
@@ -614,6 +879,73 @@ export default function SellersDashboard() {
             </div>
           </div>
         )}
+
+        {activeModal === 'viewOrder' && selectedOrder && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+            <div className="bg-white w-[700px] max-h-[85vh] overflow-auto p-6 rounded-xl shadow-xl">
+
+              <h2 className="text-xl font-bold mb-4">Order Details</h2>
+
+              <p><b>Order ID:</b> {selectedOrder.orderId}</p>
+              <p><b>Buyer:</b> {selectedOrder.buyerName || selectedOrder.buyerId}</p>
+              <p><b>Status:</b> {selectedOrder.status}</p>
+              <p><b>RFQ ID:</b> {selectedOrder.rfqId}</p>
+
+              <hr className="my-3" />
+
+              <h3 className="font-semibold mb-2">Items</h3>
+
+              {(selectedOrder.items || []).map((i: any, idx: number) => (
+                <div key={idx} className="border p-3 rounded mb-3">
+
+                  <p><b>Model:</b> {i.modelName}</p>
+
+                  <p><b>Total Qty:</b> {i.requestedQty}</p>
+                  <p><b>Unit Price:</b> ₹{i.unitPrice}</p>
+
+                  {/* 🔥 CITY-WISE BREAKDOWN */}
+                  <div className="mt-2">
+                    <p className="font-medium text-sm">City-wise Distribution:</p>
+
+                    <ul className="ml-4 list-disc text-sm text-gray-600">
+                      {(i.locations || []).map((l: any, j: number) => (
+                        <li key={j}>
+                          {l.city} – {l.qty}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                </div>
+              ))}
+
+              <div className="flex justify-between mt-4">
+
+                {/* DOWNLOAD BUTTON */}
+
+
+                <button
+                  className="px-4 py-2 bg-indigo-600 text-white rounded"
+                  onClick={() => downloadOrderPDF(selectedOrder)}
+                >
+                  PDF
+                </button>
+
+                {/* CLOSE */}
+                <button
+                  className="px-4 py-2 bg-gray-600 text-white rounded"
+                  onClick={() => setActiveModal(null)}
+                >
+                  Close
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* TABS */}
         {/* TABS */}
         <div className="flex gap-6 mb-6 border-b">
@@ -685,6 +1017,13 @@ export default function SellersDashboard() {
                       setForm({ ...form, moq: e.target.value })
                     }
                   />
+                  <input className="border p-2 rounded" placeholder="Specifications (Battery, Range, Engine etc.)" />
+
+                  <input
+                    type="file"
+                    onChange={(e) => setImage(e.target.files?.[0])}
+                    className="border p-2 rounded"
+                  />
                 </div>
 
                 <button
@@ -693,6 +1032,9 @@ export default function SellersDashboard() {
                 >
                   Publish
                 </button>
+
+
+
               </div>
 
               <div>
@@ -848,14 +1190,117 @@ export default function SellersDashboard() {
             </div>
           </div>
         )}
+        {showPaymentModal && selectedOrder && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
 
+            <div className="bg-white p-6 rounded shadow-md w-[450px]">
+
+              <h3 className="text-lg font-bold mb-4">Payment Verification</h3>
+
+              {/* ================= ORDER INFO ================= */}
+              <div className="text-sm mb-3">
+                <p><b>Order ID:</b> {selectedOrder.orderId}</p>
+                <p><b>Buyer:</b> {selectedOrder.buyerName || selectedOrder.buyerId}</p>
+                <p><b>Seller:</b> {selectedOrder.sellerName}</p>
+                <p><b>RFQ ID:</b> {selectedOrder.rfqId}</p>
+              </div>
+
+              <hr className="my-2" />
+
+              {/* ================= PAYMENT INFO ================= */}
+              <div className="text-sm mb-3">
+                <p><b>UTR / Ref:</b> {selectedOrder.paymentRef || "—"}</p>
+                <p>
+                  <b>Date:</b>{" "}
+                  {selectedOrder.paymentDate
+                    ? new Date(selectedOrder.paymentDate).toLocaleDateString()
+                    : "—"}
+                </p>
+              </div>
+
+              <hr className="my-2" />
+
+              {/* ================= FINANCIAL ================= */}
+              <div className="text-sm mb-3">
+                <p><b>Proforma Amount:</b> ₹ {selectedOrder.unitPrice || 0}</p>
+                <p><b>Amount Paid:</b> ₹ {selectedOrder.amountPaid || 0}</p>
+
+                <p>
+                  <b>Difference:</b>{" "}
+                  ₹ {(selectedOrder.amountPaid || 0) - (selectedOrder.unitPrice || 0)}
+                </p>
+
+                {Number(selectedOrder.amountPaid) === Number(selectedOrder.unitPrice) ? (
+                  <p className="text-green-600 font-semibold">✔ Payment Matched</p>
+                ) : (
+                  <p className="text-red-600 font-semibold">⚠ Payment Mismatch</p>
+                )}
+              </div>
+
+              {/* ================= ACTION ================= */}
+              <div className="flex justify-between mt-5">
+
+                <button
+                  className="bg-gray-500 text-white px-3 py-1 rounded"
+                  onClick={() => {
+                    setShowPaymentModal(false)
+                    setSelectedOrder(null)
+                  }}
+                >
+                  Close
+                </button>
+
+                <button
+                  className={`px-3 py-1 rounded text-white ${Number(selectedOrder.amountPaid) === Number(selectedOrder.unitPrice)
+                    ? "bg-green-600"
+                    : "bg-gray-300 cursor-not-allowed"
+                    }`}
+                  disabled={
+                    Number(selectedOrder.amountPaid) !== Number(selectedOrder.unitPrice)
+                  }
+                  onClick={async () => {
+
+                    const res = await fetch("/api/payment/release-receipt", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        orderId: selectedOrder.orderId
+                      })
+                    })
+
+                    if (!res.ok) {
+                      alert("Failed to release receipt")
+                      return
+                    }
+
+                    alert("Receipt released successfully")
+
+                    setShowPaymentModal(false)
+                    setSelectedOrder(null)
+
+                    window.location.reload()
+                  }}
+                >
+                  Approve & Release Receipt
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
         {/* ================= RFQS ================= */}
+
+
         {tab === 'rfqs' && USER_ROLE === 'seller' && (
+
+
           <div className="bg-white p-6 rounded-xl shadow">
             <table className="w-full text-sm border">
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="p-2 text-left">RFQ ID</th>
+                  <th className="p-2 text-left">Buyer</th>
                   <th className="p-2 text-left">Type</th>
                   <th className="p-2 text-left">Models</th>
                   <th className="p-2 text-left">Total Qty</th>
@@ -869,7 +1314,7 @@ export default function SellersDashboard() {
               <tbody>
                 {sellerRFQs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center p-4 text-gray-400">
+                    <td colSpan={7} className="text-center p-4 text-gray-400">
                       No RFQs available
                     </td>
                   </tr>
@@ -898,7 +1343,7 @@ export default function SellersDashboard() {
                       const b = items[0] || {};
 
                       scopeDisplay = `${b.fuelType || ''} ${b.vehicleType || ''} 
-      (${b.minSpec || ''}-${b.maxSpec || ''})`;
+                      (${b.minSpec || ''}-${b.maxSpec || ''})`;
 
                       totalQty = (b.locations || []).reduce(
                         (sum: number, l: any) => sum + Number(l.qty || 0),
@@ -910,7 +1355,7 @@ export default function SellersDashboard() {
                     return (
                       <tr key={r.rfqId} className="border-t">
                         <td className="p-2">{r.rfqId}</td>
-
+                        <td className="p-2">{r.buyerName || 'Corporate'}</td>
                         <td className="p-2">{r.rfqType}</td>
 
                         <td className="p-2">{scopeDisplay || '—'}</td>
@@ -923,18 +1368,55 @@ export default function SellersDashboard() {
                         </td>
 
                         <td className="p-2">
-                          {r.status === 'OPEN' && (
+                          <div className="flex justify-start gap-2">
                             <button
-                              className="px-3 py-1 bg-indigo-600 text-white rounded text-sm"
+                              className="px-3 py-1 bg-gray-700 text-white rounded text-sm"
                               onClick={() => {
                                 setSelectedRfq(r);
-                                setActiveModal('respondRFQ');
+                                setActiveModal('viewRFQ');
                               }}
-
                             >
-                              Respond
+                              View RFQ
                             </button>
-                          )}
+                            {r.status === 'OPEN' && (
+                              <button
+                                className="px-3 py-1 bg-indigo-600 text-white rounded text-sm"
+                                onClick={() => {
+                                  setSelectedRfq(r);
+                                  setActiveModal('respondRFQ');
+                                }}
+                              >
+                                Respond
+                              </button>
+                            )}
+                            {r.status === 'RESPONDED' && (
+                              <div className="flex gap-2">
+
+                                <button
+                                  className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
+                                  onClick={() => viewQuotation(r)}
+                                >
+                                  View
+                                </button>
+
+                                <button
+                                  className="px-3 py-1 bg-green-600 text-white rounded text-sm"
+                                  onClick={() => downloadQuotation(r)}
+                                >
+                                  Download
+                                </button>
+
+                                <button
+                                  className="px-3 py-1 bg-indigo-600 text-white rounded text-sm"
+                                  onClick={() => sendQuotation(r)}
+                                >
+                                  Send
+                                </button>
+
+                              </div>
+                            )}
+
+                          </div>
                         </td>
                       </tr>
                     );
@@ -978,7 +1460,7 @@ export default function SellersDashboard() {
                       <td className="p-2">
                         {o.buyerName || o.buyerId}
                       </td>
-
+                      <td className="p-2">{o.rfqId}</td>
                       <td className="p-2">
                         {Array.isArray(o.items) && o.items.length > 0
                           ? o.items
@@ -991,27 +1473,84 @@ export default function SellersDashboard() {
                       <td className="p-2">
                         {o.totalQty ? `${o.totalQty} units` : '—'}
                       </td>
-
-
                       <td className="p-2">
                         {o.orderValue ? `₹${o.orderValue}` : '—'}
                       </td>
-
-
                       <td className="p-2">
                         {o.deliveryTimeline
                           ? `${o.deliveryTimeline} days`
                           : '—'}
                       </td>
-
                       <td className="p-2">
                         <span className="text-green-600 font-medium">
                           {o.status}
                         </span>
                       </td>
+                      <td className="p-2 flex gap-2">
 
-                      <td className="p-2">
-                        <span className="text-gray-500">—</span>
+                        {/* ✅ 1. VIEW ORDER */}
+                        <button
+                          className="px-2 py-1 bg-gray-600 text-white rounded text-xs"
+                          onClick={() => {
+                            setSelectedOrder(o)
+                            setActiveModal("viewOrder")
+                          }}
+                        >
+                          View
+                        </button>
+
+                        {/* ✅ 2. PROFORMA */}
+                        <button
+                          className="px-2 py-1 bg-indigo-600 text-white rounded text-xs"
+                          onClick={() => generateProforma(o.orderId)}
+                        >
+                          {o.proformaGenerated ? "Download Proforma" : "Generate Proforma"}
+                        </button>
+
+                        {/* ✅ 3. PAYMENT FLOW */}
+                        {o.paymentStatus === "SUBMITTED" && (
+                          <button
+                            className="px-2 py-1 bg-green-700 text-white rounded text-xs"
+                            onClick={() => {
+                              setSelectedOrder(o)
+                              setActiveModal(null)
+                              setShowPaymentModal(true)
+                            }}
+                          >
+                            Verify Payment
+                          </button>
+                        )}
+
+                        {o.paymentStatus === "RECEIPT_ISSUED" && (
+                          <button
+                            className="px-2 py-1 bg-green-600 text-white rounded text-xs"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`/api/documents/receipt/pdf?orderId=${o.orderId}`)
+
+                                if (!res.ok) {
+                                  alert("Receipt not available")
+                                  return
+                                }
+
+                                const blob = await res.blob()
+                                const url = window.URL.createObjectURL(blob)
+
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = `Receipt-${o.orderId}.pdf`
+                                a.click()
+
+                              } catch (err) {
+                                console.error(err)
+                                alert("Error downloading receipt")
+                              }
+                            }}
+                          >
+                            Download Receipt
+                          </button>
+                        )}
+
                       </td>
                     </tr>
                   ))
@@ -1027,7 +1566,38 @@ export default function SellersDashboard() {
             <CardHeader>
               <CardTitle>Beneficiaries</CardTitle>
             </CardHeader>
+
             <CardContent>
+
+              {/* 🔥 PO vs Allocation Summary */}
+              {allocationSummary.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold mb-2">Allocation Summary</h3>
+
+                  <table className="w-full text-sm mb-4">
+                    <thead>
+                      <tr>
+                        <th>Model</th>
+                        <th>City</th>
+                        <th>Allocated</th>
+                        <th>Required</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {allocationSummary.map((row, i) => (
+                        <tr key={i} className="border-t">
+                          <td>{row.model}</td>
+                          <td>{row.city}</td>
+                          <td>{row.assigned}</td>
+                          <td>{row.required}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* 🔥 Beneficiary Table */}
               <table className="w-full text-sm">
                 <thead>
                   <tr>
@@ -1036,9 +1606,10 @@ export default function SellersDashboard() {
                     <th>Mobile</th>
                     <th>City</th>
                     <th>Pincode</th>
-                    <th>Voucher Status</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {orderBeneficiaries.length === 0 ? (
                     <tr>
@@ -1047,7 +1618,7 @@ export default function SellersDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    orderBeneficiaries.map((b, i) => (
+                    orderBeneficiaries.map((b: any, i: number) => (
                       <tr key={i} className="border-t">
                         <td>{b.orderId}</td>
                         <td>{b.beneficiary?.name}</td>
@@ -1059,14 +1630,13 @@ export default function SellersDashboard() {
                         </td>
                       </tr>
                     ))
-
                   )}
                 </tbody>
               </table>
+
             </CardContent>
           </Card>
         )}
-
 
 
 

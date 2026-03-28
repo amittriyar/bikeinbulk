@@ -5,6 +5,40 @@
 import { getDb } from './db';
 
 
+/* ===============================
+   Seller Bid Types
+   =============================== */
+
+export type LocationQuote = {
+  city: string
+  qty: number
+  quotedPrice: number
+}
+
+export type ModelQuote = {
+  modelName: string
+  locations: LocationQuote[]
+}
+
+export type SellerBid = {
+  bidId: string
+  rfqId: string
+  sellerId: string
+  sellerName: string
+  locationQuotes: ModelQuote[]
+  totalValue: number
+  moq?: number
+  deliveryTimeline?: string
+  validityDays?: number
+  remarks?: string
+  createdAt: string
+}
+
+
+/* ===============================
+   RFQ Item
+   =============================== */
+
 export type RFQItem = {
   // MODEL RFQ
   catalogueId?: string;
@@ -108,5 +142,55 @@ export async function appendBidToRFQ(rfqId: string, bid: any) {
       status: 'RESPONDED',
     },
   });
+
+}
+export async function buildQuotationData(rfqId: string) {
+
+  const rfq = await getRFQById(rfqId)
+
+  if (!rfq) throw new Error("RFQ not found")
+
+  const bids = (rfq.bids as SellerBid[]) || []
+
+  if (!bids.length) throw new Error("No bids received")
+
+  // L1 seller
+  const winningBid = bids.sort((a, b) => a.totalValue - b.totalValue)[0]
+
+  const items: any[] = []
+
+  winningBid.locationQuotes.forEach(model => {
+
+    model.locations.forEach(loc => {
+
+      items.push({
+        model: model.modelName,
+        city: loc.city,
+        qty: loc.qty,
+        unitPrice: loc.quotedPrice
+      })
+
+    })
+
+  })
+
+  return {
+    quotationNo: "QT-" + Date.now(),
+    rfqId: rfq.rfqId,
+    date: new Date().toLocaleDateString(),
+    validityDays: winningBid.validityDays || 30,
+
+    buyer: {
+      name: "Corporate Buyer", // replace later with buyer table
+      gst: "NA"
+    },
+
+    seller: {
+      name: winningBid.sellerName,
+      gst: "NA"
+    },
+
+    items
+  }
 
 }

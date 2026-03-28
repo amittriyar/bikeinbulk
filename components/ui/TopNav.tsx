@@ -28,23 +28,45 @@ export default function TopNav() {
   }
 
   return (
-  <nav className="bg-gradient-to-r from-indigo-700 to-blue-700 text-white px-8 py-4 shadow-md">
-    <div className="max-w-6xl mx-auto flex justify-between items-center">
+    <nav className="bg-gradient-to-r from-indigo-700 to-blue-700 text-white px-8 py-4 shadow-md">
+      <div className="max-w-6xl mx-auto flex justify-between items-center">
 
-      <Link href="/" className="flex items-center">
-        <GCLogo />
+        <Link href="/" className="flex items-center">
+          <GCLogo />
+        </Link>
+
+        <div className="flex items-center gap-3">
+
+  {!authenticated && (
+    <>
+      <Link
+        href="/login"
+        className="text-white hover:bg-white/10 px-4 py-2 rounded"
+      >
+        Login
       </Link>
 
-      {authenticated && (
-        <button
-          onClick={handleLogout}
-          className="bg-white text-indigo-700 px-4 py-1.5 rounded-full font-semibold hover:bg-gray-200 transition"
-        >
-          Logout
-        </button>
-      )}
+      <Link
+        href="/signup"
+        className="bg-white text-indigo-700 px-4 py-2 rounded"
+      >
+        Sign Up
+      </Link>
+    </>
+  )}
 
-    </div>
-  </nav>
-)
+  {authenticated && (
+    <button
+      onClick={handleLogout}
+      className="bg-white text-indigo-700 px-4 py-2 rounded"
+    >
+      Logout
+    </button>
+  )}
+
+</div>
+
+      </div>
+    </nav>
+  )
 }

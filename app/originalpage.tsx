@@ -29,7 +29,7 @@ export default function HomePage() {
 
             <Link
               href="/signup"
-              className="bg-white text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded"
+              className="bg-white text-indigo-200 hover:bg-indigo-100 px-4 py-2 rounded"
             >
               Sign Up
             </Link>
@@ -85,10 +85,10 @@ export default function HomePage() {
               <button className="px-6 py-3 text-sm font-semibold bg-indigo-600 text-white">
                 2W / 4W OEMs
               </button>
-              <button className="px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100">
+              <button className="px-6 py-3 text-sm font-semibold text-gray-200 hover:bg-gray-100">
                 Dealers
               </button>
-              <button className="px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100">
+              <button className="px-6 py-3 text-sm font-semibold text-gray-200 hover:bg-gray-100">
                 Corporates
               </button>
             </div>
@@ -135,15 +135,15 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-10">
           <div className="bg-white shadow-2xl rounded-3xl p-10">
             <h2 className="text-3xl font-bold mb-6">About Us</h2>
-            <p className="text-gray-700 mb-4">
+            <p className="text-gray-200 mb-4">
               GiftConnect streamlines digital vouchers and incentives for OEMs,
               dealers, and corporates.
             </p>
-            <p className="text-gray-700 mb-4">
+            <p className="text-gray-200 mb-4">
               <strong>Amit Verma</strong> is a senior sales leader with 20+ years
               of experience in institutional sales and OEM partnerships.
             </p>
-            <p className="text-gray-700">
+            <p className="text-gray-200">
               Founder: Amit Verma <br />
               Mobile: 8826462828 <br />
               Email: amittryl@gmail.com
@@ -152,7 +152,7 @@ export default function HomePage() {
 
           <div className="bg-white shadow-2xl rounded-3xl p-10">
             <h2 className="text-3xl font-bold mb-6">Our Business Activities</h2>
-            <ul className="space-y-3 text-gray-700">
+            <ul className="space-y-3 text-gray-200">
               <li>Digital Gift Cards & Vouchers</li>
               <li>Channel & Sales Incentives</li>
               <li>Consumer Promotions</li>
@@ -193,7 +193,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-gray-400 py-12 px-6 flex justify-between">
+      <footer className="bg-gray-900 text-gray-200 py-12 px-6 flex justify-between">
         <p>© 2026 GiftConnect</p>
         <p>GST-compliant • Closed-loop vouchers • Secure</p>
       </footer>

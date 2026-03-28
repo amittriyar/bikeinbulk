@@ -55,7 +55,7 @@ export default function HomePage() {
             Platform for OEM Ecosystem
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-800 max-w-3xl mx-auto mb-12 leading-relaxed">
             Issue, manage and redeem digital value vouchers across OEMs,
             dealers and corporates — purpose-built for India’s
             two-wheeler and four-wheeler industry.
@@ -97,8 +97,8 @@ export default function HomePage() {
           <div className="flex justify-center mb-10">
             <div className="bg-white rounded-full shadow-lg flex overflow-hidden">
               <button className="px-6 py-3 text-sm font-semibold bg-indigo-600 text-white">2W / 4W OEMs</button>
-              <button className="px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100">Dealers</button>
-              <button className="px-6 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-100">Corporates</button>
+              <button className="px-6 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">Dealers</button>
+              <button className="px-6 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">Corporates</button>
             </div>
           </div>
 
@@ -133,7 +133,7 @@ export default function HomePage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-gray-900 text-gray-400 py-12 px-6 flex flex-col md:flex-row justify-between items-center">
+      <footer className="bg-gray-900 text-gray-800 py-12 px-6 flex flex-col md:flex-row justify-between items-center">
         <p>© 2026 GiftConnect</p>
         <p>GST-compliant • Closed-loop vouchers • Secure</p>
       </footer>
