@@ -2,9 +2,13 @@ import QRCode from "qrcode"
 
 export async function voucherHTML(data: any) {
 
-  const qrData = `${process.env.BASE_URL}/redeem?voucherId=${data.voucherId}`
+  const baseUrl =
+    process.env.BASE_URL ||
+    "https://giftconnects.vercel.app"
 
-  
+  const qrData = `${baseUrl}/redeem?voucherId=${data.voucherId}`
+
+
   const qrImage = await QRCode.toDataURL(qrData)
 
   return `

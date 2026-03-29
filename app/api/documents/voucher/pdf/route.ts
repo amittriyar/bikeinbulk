@@ -61,7 +61,7 @@ export async function GET(req: Request) {
         const html = await voucherHTML(data)
         const pdf = await generatePDF(html)
 
-        return new Response(Buffer.from(pdf), {
+        return new Response(new Uint8Array(pdf), {
             headers: {
                 "Content-Type": "application/pdf",
                 "Content-Disposition": `attachment; filename=Voucher-${voucherId}.pdf`

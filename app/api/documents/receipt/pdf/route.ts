@@ -84,7 +84,7 @@ const total = items.reduce(
   const html = receiptHTML(data)
   const pdf = await generatePDF(html)
 
-  return new Response(Buffer.from(pdf), {
+  return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename=receipt-${orderId}.pdf`
