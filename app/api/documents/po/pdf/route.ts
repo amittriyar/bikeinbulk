@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db"
-import { generatePDF } from "@/lib/documents/generatePDF"
-import { poHTML } from "@/lib/documents/templates/po"
+import { generatePO } from "@/lib/documents/generatePO"
+
+export const runtime = "nodejs"
 
 export async function GET(req: Request) {
   try {
@@ -26,40 +27,33 @@ export async function GET(req: Request) {
     }
 
     /* ===============================
-       2️⃣ PREPARE DATA (FINAL CLEAN)
+       2️⃣ PREPARE DATA (SAME LOGIC)
     =============================== */
 
-    // 🔥 Cast Prisma JSON safely
     const rawItems = (order.items ?? []) as any[]
 
     let items: any[] = []
 
-    // 🔥 Flatten nested structure
     rawItems.forEach((model: any) => {
       const locations = model?.locations || []
 
       locations.forEach((loc: any) => {
-        const qty = Number(loc?.qty ?? 0)
-        const price = Number(loc?.quotedPrice ?? loc?.unitPrice ?? 0)
-
         items.push({
           model: model?.modelName || model?.model || "-",
           city: loc?.city || "-",
-          qty,
-          unitPrice: price
+          qty: Number(loc?.qty ?? 0),
+          unitPrice: Number(loc?.quotedPrice ?? loc?.unitPrice ?? 0)
         })
       })
     })
 
-    // 🔥 Safe total calculation
     const total = items.reduce(
       (sum, item) => sum + item.qty * item.unitPrice,
       0
     )
 
-    // 🔥 Final data object
     const data = {
-      poNo: order.orderId,
+      poNumber: order.orderId,   // 🔥 IMPORTANT CHANGE
       rfqId: order.rfqId,
       date: new Date(order.createdAt).toLocaleDateString("en-IN"),
 
@@ -76,14 +70,13 @@ export async function GET(req: Request) {
     }
 
     /* ===============================
-       3️⃣ GENERATE PDF
+       3️⃣ GENERATE PDF (REACT PDF)
     =============================== */
 
-    const html = poHTML(data)
-    const pdf = await generatePDF(html)
+    const pdf = await generatePO(data)
 
     /* ===============================
-       4️⃣ RETURN RESPONSE
+       4️⃣ RESPONSE
     =============================== */
 
     return new Response(Buffer.from(pdf), {
