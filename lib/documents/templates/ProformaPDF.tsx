@@ -37,7 +37,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: "bold",
-    marginTop: 10,
     marginBottom: 10
   },
 
@@ -54,7 +53,7 @@ const styles = StyleSheet.create({
     flexDirection: "row"
   },
 
-  /* 🔥 COLUMN WIDTHS */
+  /* COLUMN WIDTHS */
   colSr: { width: "8%" },
   colModel: { width: "24%" },
   colCity: { width: "16%" },
@@ -85,11 +84,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold"
   },
 
-  rightAlign: {
-    textAlign: "right",
-    marginTop: 20
-  },
-
   small: {
     fontSize: 8,
     marginTop: 10
@@ -101,16 +95,16 @@ const styles = StyleSheet.create({
 =============================== */
 
 function amountInWords(num: number) {
-  const ones = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine",
+  const a = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine",
   "Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen",
   "Seventeen","Eighteen","Nineteen"]
 
-  const tens = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"]
+  const b = ["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"]
 
   function convert(n:number):string {
-    if(n<20) return ones[n]
-    if(n<100) return tens[Math.floor(n/10)]+" "+ones[n%10]
-    if(n<1000) return ones[Math.floor(n/100)]+" Hundred "+convert(n%100)
+    if(n<20) return a[n]
+    if(n<100) return b[Math.floor(n/10)]+" "+a[n%10]
+    if(n<1000) return a[Math.floor(n/100)]+" Hundred "+convert(n%100)
     if(n<100000) return convert(Math.floor(n/1000))+" Thousand "+convert(n%1000)
     if(n<10000000) return convert(Math.floor(n/100000))+" Lakh "+convert(n%100000)
     return convert(Math.floor(n/10000000))+" Crore "+convert(n%10000000)
@@ -123,7 +117,7 @@ function amountInWords(num: number) {
    COMPONENT
 =============================== */
 
-export default function POPDF({ data }: any) {
+export default function ProformaPDF({ data }: any) {
 
   return (
     <Document>
@@ -135,11 +129,11 @@ export default function POPDF({ data }: any) {
           <Text>GiftConnect Marketplace</Text>
         </View>
 
-        <Text style={styles.title}>PURCHASE ORDER</Text>
+        <Text style={styles.title}>PROFORMA INVOICE</Text>
 
         {/* META */}
         <View style={styles.section}>
-          <Text>PO No {data.poNumber}</Text>
+          <Text>Invoice No {data.invoiceNo}</Text>
           <Text>RFQ Reference {data.rfqId}</Text>
           <Text>Date {data.date}</Text>
         </View>
@@ -152,15 +146,21 @@ export default function POPDF({ data }: any) {
           </View>
 
           <View style={styles.row}>
-            <Text style={[styles.cell, { flex: 1 }]}>{data.buyer.name}</Text>
-            <Text style={[styles.cell, { flex: 1 }]}>{data.seller.name}</Text>
+            <Text style={[styles.cell, { flex: 1 }]}>
+              {data.buyer.name}
+              {"\n"}GSTIN: {data.buyer.gst}
+            </Text>
+
+            <Text style={[styles.cell, { flex: 1 }]}>
+              {data.seller.name}
+              {"\n"}GSTIN: {data.seller.gst}
+            </Text>
           </View>
         </View>
 
-        {/* ITEMS TABLE */}
+        {/* ITEMS */}
         <View style={styles.table}>
 
-          {/* HEADER */}
           <View style={styles.row}>
             <Text style={[styles.cellHeader, styles.colSr]}>Sr</Text>
             <Text style={[styles.cellHeader, styles.colModel]}>Model</Text>
@@ -172,7 +172,6 @@ export default function POPDF({ data }: any) {
             <Text style={[styles.cellHeader, styles.colTotal]}>Total</Text>
           </View>
 
-          {/* ROWS */}
           {(data.items || []).map((item: any, i: number) => {
 
             const total = item.qty * item.unitPrice
@@ -212,40 +211,30 @@ export default function POPDF({ data }: any) {
 
         {/* TOTAL */}
         <Text style={styles.total}>
-          Total ₹ {Number(data.total).toLocaleString("en-IN")}
+          Grand Total ₹ {Number(data.total).toLocaleString("en-IN")}
         </Text>
 
         <Text>
           Amount in Words: Rupees {amountInWords(data.total)} Only
         </Text>
 
-        {/* TERMS */}
+        {/* PAYMENT TERMS */}
         <View style={styles.section}>
-          <Text>Terms</Text>
-          <Text>This Purchase Order constitutes a binding agreement between Buyer and Seller.</Text>
-          <Text>Delivery timelines and commercial terms shall be as agreed in the quotation.</Text>
+          <Text>Payment Terms</Text>
+          <Text>100% advance payment shall be made by the Buyer against this Proforma Invoice.</Text>
         </View>
 
         {/* TERMS */}
         <View style={styles.section}>
           <Text>Terms & Conditions</Text>
 
-          <Text>1. This Purchase Order constitutes a binding agreement between Buyer and Seller.</Text>
-          <Text>2. Prices are Ex-Showroom and inclusive of applicable GST unless specified otherwise.</Text>
-          <Text>3. Additional charges such as RTO, insurance, accessories and handling shall be borne by the beneficiary.</Text>
-          <Text>4. Delivery timelines shall be as agreed in the accepted quotation.</Text>
-          <Text>5. Seller shall be responsible for vehicle availability, delivery and documentation.</Text>
-          <Text>6. GiftConnect acts solely as a digital marketplace facilitator.</Text>
-          <Text>7. Any disputes shall be subject to mutually agreed jurisdiction.</Text>
+          <Text>1. This Proforma Invoice is issued for advance payment.</Text>
+          <Text>2. Prices are Ex-Showroom inclusive of GST.</Text>
+          <Text>3. Additional charges to be borne by beneficiary.</Text>
+          <Text>4. Delivery starts after full payment.</Text>
+          <Text>5. GiftConnect acts as facilitator only.</Text>
         </View>
 
-        {/* SIGNATURE */}
-        <View style={styles.rightAlign}>
-          <Text>For {data.seller.name}</Text>
-          <Text>Authorized Signatory</Text>
-        </View>
-
-        {/* FOOTER */}
         <Text style={styles.small}>
           Powered by GiftConnect – Enterprise Marketplace
         </Text>

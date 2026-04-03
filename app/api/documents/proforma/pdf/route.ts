@@ -1,6 +1,7 @@
 import { buildDocumentData } from "@/lib/documents/buildDocumentData"
-import { generatePDF } from "@/lib/documents/generatePDF"
-import { proformaHTML } from "@/lib/documents/templates/proforma"
+import { generateProforma } from "@/lib/documents/generateProforma"
+
+export const runtime = "nodejs"
 
 export async function GET(req: Request) {
 
@@ -12,11 +13,21 @@ export async function GET(req: Request) {
       return new Response("Missing Order ID", { status: 400 })
     }
 
-    // ✅ FIXED
+    /* ===============================
+       1️⃣ BUILD DATA
+    =============================== */
+
     const data = await buildDocumentData(orderId, "proforma")
 
-    const html = proformaHTML(data)
-    const pdf = await generatePDF(html)
+    /* ===============================
+       2️⃣ GENERATE PDF (REACT PDF)
+    =============================== */
+
+    const pdf = await generateProforma(data)
+
+    /* ===============================
+       3️⃣ RESPONSE
+    =============================== */
 
     return new Response(Buffer.from(pdf), {
       headers: {
