@@ -39,6 +39,8 @@ export default function LoginPage() {
         router.push('/sellersdashboard');
       } else if (data.role === 'BUYER') {
         router.push('/buyers');
+      } else if (data.role === 'RESELLER') {
+        router.push('/redeem');   // 🔥 IMPORTANT
       } else {
         router.push('/');
       }

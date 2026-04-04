@@ -45,6 +45,8 @@ const ORDERS = [
   },
 ];
 
+
+
 const REDEMPTIONS = [
   { id: 'R-001', dealer: 'TVS Chennai', amount: '₹2,000', date: 'Jan 2026' },
   { id: 'R-002', dealer: 'TVS Pune', amount: '₹3,500', date: 'Feb 2026' },
@@ -64,6 +66,13 @@ const VOUCHERS = [
 /* ================= PAGE ================= */
 
 export default function SellersDashboard() {
+  const [redemptions, setRedemptions] = useState<any[]>([])
+
+  useEffect(() => {
+    fetch('/api/redemptions')
+      .then(res => res.json())
+      .then(setRedemptions)
+  }, [])
   type ModalType =
     | null
     | 'respondRFQ'
@@ -591,32 +600,32 @@ export default function SellersDashboard() {
 
   let grouped: Record<string, any[]> = {};
 
-if (orderBeneficiaries && orderBeneficiaries.length > 0) {
-  orderBeneficiaries.forEach((b: any) => {
-    const city = b.beneficiary?.city || "UNKNOWN";
+  if (orderBeneficiaries && orderBeneficiaries.length > 0) {
+    orderBeneficiaries.forEach((b: any) => {
+      const city = b.beneficiary?.city || "UNKNOWN";
 
-    if (!grouped[city]) grouped[city] = [];
-    grouped[city].push(b);
-  });
-}
-let allocationSummary: any[] = [];
+      if (!grouped[city]) grouped[city] = [];
+      grouped[city].push(b);
+    });
+  }
+  let allocationSummary: any[] = [];
 
-if (selectedOrder?.items) {
-  selectedOrder.items.forEach((model: any) => {
-    model.locations?.forEach((loc: any) => {
-      const city = loc.city;
+  if (selectedOrder?.items) {
+    selectedOrder.items.forEach((model: any) => {
+      model.locations?.forEach((loc: any) => {
+        const city = loc.city;
 
-      const assigned = grouped[city]?.length || 0;
+        const assigned = grouped[city]?.length || 0;
 
-      allocationSummary.push({
-        model: model.model || model.modelName,
-        city,
-        assigned,
-        required: loc.qty
+        allocationSummary.push({
+          model: model.model || model.modelName,
+          city,
+          assigned,
+          required: loc.qty
+        });
       });
     });
-  });
-}
+  }
 
   /* ================= RENDER ================= */
 
@@ -1646,7 +1655,7 @@ if (selectedOrder?.items) {
           <div className="bg-white p-6 rounded-xl shadow">
             <table className="w-full text-sm">
               <tbody>
-                {REDEMPTIONS.map(r => (
+                {redemptions.map(r => (
                   <tr key={r.id} className="border-t">
                     <td>{r.id}</td>
                     <td>{r.dealer}</td>

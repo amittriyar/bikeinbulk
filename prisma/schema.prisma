@@ -78,6 +78,9 @@ model Reseller {
 
   vouchers           Voucher[]
   orderBeneficiaries OrderBeneficiary[]
+
+ userId           String?
+ parentSellerId   String?
 }
 
 model Beneficiary {
@@ -114,7 +117,12 @@ model Voucher {
   beneficiary Beneficiary @relation(fields: [beneficiaryId], references: [beneficiaryId])
   reseller    Reseller    @relation(fields: [mappedResellerId], references: [resellerCode])
   order       Order       @relation(fields: [orderId], references: [orderId])
+
+ // ✅ ADD THIS
+  redemptions Redemption[]
 }
+
+
 
 model OrderBeneficiary {
   id               String   @id @default(uuid())
@@ -134,10 +142,21 @@ model OrderBeneficiary {
   reseller    Reseller?   @relation(fields: [mappedResellerId], references: [resellerCode])
 }
 
+model Redemption {
+  id         String   @id @default(uuid())
+  voucherId  String
+  amount     Float
+  dealerId   String
+  redeemedAt DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucherId], references: [voucherId])
+}
+
 enum Role {
   BUYER
   SELLER
   ADMIN
+  RESELLER   // 🔥 ADD THIS
 }
 
 model User {
@@ -147,4 +166,15 @@ model User {
   password  String
   role      Role
   createdAt DateTime @default(now())
+  companyName      String?
+  companyAddress   String?
+  gstNumber        String?
+  panNumber        String?
+  bankAccount      String?
+  ifscCode         String?
+  contactPerson    String?
+  phoneNumber      String?
+
+  status           String   @default("ACTIVE")
+  approvalExpiry   DateTime?
 }

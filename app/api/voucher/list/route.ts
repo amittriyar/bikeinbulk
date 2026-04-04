@@ -6,13 +6,16 @@ export const dynamic = 'force-dynamic';
 
 
 export async function GET(req: Request) {
-  
+
   const db = getDb(); // ✅ Initialize INSIDE handler
   const { searchParams } = new URL(req.url)
   const orderId = searchParams.get('orderId')
-
+  const voucherId = searchParams.get('voucherId')
   const vouchers = await db.voucher.findMany({
-    where: orderId ? { orderId } : {},
+    where: {
+      ...(orderId ? { orderId } : {}),
+      ...(voucherId ? { voucherId } : {})
+    },
     include: {
       beneficiary: true,
       reseller: true

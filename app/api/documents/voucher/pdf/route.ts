@@ -33,8 +33,9 @@ export async function GET(req: Request) {
     =============================== */
 
     const baseUrl =
-      process.env.BASE_URL ||
-      "https://giftconnects.vercel.app"
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      "https://giftconnects.vercel.app" ||
+      "http://localhost:3000";
 
     const qrData = `${baseUrl}/redeem?voucherId=${voucherId}`
     const qrImage = await QRCode.toDataURL(qrData)
@@ -62,10 +63,10 @@ export async function GET(req: Request) {
 
       reseller: voucher.reseller
         ? {
-            companyName: voucher.reseller.companyName,
-            city: voucher.reseller.city,
-            state: voucher.reseller.state
-          }
+          companyName: voucher.reseller.companyName,
+          city: voucher.reseller.city,
+          state: voucher.reseller.state
+        }
         : null,
 
       status: voucher.status,

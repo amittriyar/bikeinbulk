@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db"
 
 export async function POST(req: Request) {
-
+  const { voucherId, dealerId } = await req.json()
   try {
     const { voucherId } = await req.json()
     const db = getDb()
@@ -11,7 +11,10 @@ export async function POST(req: Request) {
     })
 
     if (!voucher) {
-      return new Response("Invalid voucher", { status: 404 })
+      return Response.json({
+        success: false,
+        message: "Invalid voucher"
+      }, { status: 404 })
     }
 
     /* ===============================
@@ -19,17 +22,42 @@ export async function POST(req: Request) {
     =============================== */
 
     if (voucher.status === "REDEEMED") {
-      return new Response("Voucher already redeemed", { status: 400 })
+      return Response.json({
+        success: false,
+        message: "Voucher already redeemed"
+      }, { status: 400 })
     }
 
     if (voucher.status !== "ACTIVE") {
-      return new Response("Voucher not active", { status: 400 })
+      return Response.json({
+        success: false,
+        message: "Voucher not active"
+      }, { status: 400 })
     }
 
     if (voucher.expiryDate && new Date(voucher.expiryDate) < new Date()) {
-      return new Response("Voucher expired", { status: 400 })
+      return Response.json({
+        success: false,
+        message: "Voucher expired"
+      }, { status: 400 })
+    }
+    /* ===============================
+       DEALER AUTH CHECK
+    =============================== */
+
+    if (!dealerId) {
+      return Response.json({
+        success: false,
+        message: "Unauthorized"
+      }, { status: 401 })
     }
 
+    if (voucher.mappedResellerId !== dealerId) {
+      return Response.json({
+        success: false,
+        message: "This voucher is not assigned to your dealership"
+      }, { status: 403 })
+    }
     /* ===============================
        REDEEM
     =============================== */
@@ -41,7 +69,17 @@ export async function POST(req: Request) {
         redeemedAt: new Date()
       }
     })
-
+    /* ===============================
+       SAVE REDEMPTION RECORD
+    =============================== */
+    await db.redemption.create({
+      data: {
+        voucherId,
+        amount: voucher.value,
+        dealerId: voucher.mappedResellerId || "UNKNOWN",
+        redeemedAt: new Date()
+      }
+    })
     return Response.json({
       success: true,
       message: "Voucher redeemed successfully",

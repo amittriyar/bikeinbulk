@@ -5,10 +5,18 @@ import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const router = useRouter();
-
+  const [companyName, setCompanyName] = useState('')
+  const [companyAddress, setCompanyAddress] = useState('')
+  const [gstNumber, setGstNumber] = useState('')
+  const [panNumber, setPanNumber] = useState('')
+  const [bankAccount, setBankAccount] = useState('')
+  const [ifscCode, setIfscCode] = useState('')
+  const [contactPerson, setContactPerson] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [parentSellerId, setParentSellerId] = useState('')
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'BUYER' | 'SELLER'>('BUYER');
+  const [role, setRole] = useState<'BUYER' | 'SELLER' | 'RESELLER'>('BUYER');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +28,25 @@ export default function SignupPage() {
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, role }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+          role: role.toUpperCase(),
+
+          companyName,
+          companyAddress,
+          gstNumber,
+          panNumber,
+          bankAccount,
+          ifscCode,
+          contactPerson,
+          phoneNumber,
+
+          parentSellerId
+        })
       });
 
       const data = await res.json();
@@ -41,7 +66,7 @@ export default function SignupPage() {
   };
 
   return (
-    
+
     <div className="min-h-screen grid md:grid-cols-2">
 
       {/* LEFT BRAND PANEL */}
@@ -110,7 +135,14 @@ export default function SignupPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
+          <input placeholder="Company Name" onChange={e => setCompanyName(e.target.value)} />
+          <input placeholder="Company Address" onChange={e => setCompanyAddress(e.target.value)} />
+          <input placeholder="GST Number" onChange={e => setGstNumber(e.target.value)} />
+          <input placeholder="PAN Number" onChange={e => setPanNumber(e.target.value)} />
+          <input placeholder="Bank Account" onChange={e => setBankAccount(e.target.value)} />
+          <input placeholder="IFSC Code" onChange={e => setIfscCode(e.target.value)} />
+          <input placeholder="Contact Person" onChange={e => setContactPerson(e.target.value)} />
+          <input placeholder="Phone Number" onChange={e => setPhoneNumber(e.target.value)} />
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Account Type
           </label>
@@ -119,13 +151,23 @@ export default function SignupPage() {
             className="w-full border border-gray-300 px-3 py-2 mb-6 rounded focus:ring-2 focus:ring-indigo-500 text-gray-900"
             value={role}
             onChange={(e) =>
-              setRole(e.target.value as 'BUYER' | 'SELLER')
+              setRole(e.target.value as 'BUYER' | 'SELLER' | 'RESELLER')
+
             }
+
           >
             <option value="BUYER">Buyer</option>
             <option value="SELLER">Seller</option>
-          </select>
+            <option value="RESELLER">Reseller</option>
 
+          </select>
+          {role === "RESELLER" && (
+            <input
+              className="border p-2 w-full mb-3"
+              placeholder="Parent Seller ID"
+              onChange={e => setParentSellerId(e.target.value)}
+            />
+          )}
           <button
             type="submit"
             disabled={loading}
