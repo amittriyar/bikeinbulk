@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Card,
@@ -7,17 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
 import * as XLSX from 'xlsx';
-
-
-
 import TopNav from '@/components/ui/TopNav';
-
-
 export const runtime = 'nodejs';
-
-
 
 /* ================= MOCK DATA ================= */
 
@@ -44,14 +35,10 @@ const ORDERS = [
     voucherStatus: '—',
   },
 ];
-
-
-
 const REDEMPTIONS = [
   { id: 'R-001', dealer: 'TVS Chennai', amount: '₹2,000', date: 'Jan 2026' },
   { id: 'R-002', dealer: 'TVS Pune', amount: '₹3,500', date: 'Feb 2026' },
 ];
-
 const VOUCHERS = [
   {
     code: 'VCH-001',
@@ -67,7 +54,6 @@ const VOUCHERS = [
 
 export default function SellersDashboard() {
   const [redemptions, setRedemptions] = useState<any[]>([])
-
   useEffect(() => {
     fetch('/api/redemptions')
       .then(res => res.json())
@@ -79,64 +65,50 @@ export default function SellersDashboard() {
     | 'viewOrder'
     | 'issueVoucher'
     | 'viewRFQ';
-
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const downloadCatalogue = () => {
     const rows = catalogue.map(p =>
       `${p.name},${p.category},${p.voucher},${p.moq},${p.status}`
     );
-
     const csv = "Product,Category,Voucher,MOQ,Status\n" + rows.join("\n");
-
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = "catalogue.csv";
     a.click();
   };
-
   const downloadOrderPDF = async (o: any) => {
     try {
       const res = await fetch(`/api/documents/po/pdf?orderId=${o.orderId}`);
-
       if (!res.ok) {
         alert("PO not available yet");
         return;
       }
-
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = `PO-${o.orderId}.pdf`;
       a.click();
-
     } catch (err) {
       console.error("PO download error:", err);
       alert("Error downloading PO");
     }
   };
   const [selectedRfq, setSelectedRfq] = useState<any | null>(null);
-
   const downloadAllRFQs = () => {
     const rows = sellerRFQs.map(r =>
       `${r.rfqId},${r.buyerName},${r.rfqType},${r.status}`
     );
-
     const csv = "RFQ ID,Buyer,Type,Status\n" + rows.join("\n");
-
     const blob = new Blob([csv], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "all_rfqs.csv";
     a.click();
   };
-
   const downloadRFQExcel = (r: any) => {
-
     const rows = (r.items || []).map((i: any) => {
       const locations = (i.locations || [])
         .map((l: any) => `${l.city}:${l.qty}`)
@@ -144,14 +116,11 @@ export default function SellersDashboard() {
 
       return `${r.rfqId},${r.rfqType},${i.modelName || ''},${locations}`;
     });
-
     const csv =
       "RFQ ID,Type,Model,Locations\n" +
       rows.join("\n");
-
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     a.download = `${r.rfqId}.csv`;
@@ -160,46 +129,33 @@ export default function SellersDashboard() {
   function viewQuotation(r: any) {
     window.open(`/api/documents/quotations/pdf?rfqId=${r.rfqId}`, "_blank");
   }
-
   async function downloadQuotation(rfq: any) {
-
     const res = await fetch(`/api/documents/quotations/pdf?rfqId=${rfq.rfqId}`)
-
     const blob = await res.blob()
-
     const url = window.URL.createObjectURL(blob)
-
     const a = document.createElement("a")
-
     a.href = url
     a.download = `Quotation-${rfq.rfqId}.pdf`
-
     a.click()
-
   }
   const generateProforma = async (orderId: string) => {
     try {
       const res = await fetch(`/api/documents/proforma/pdf?orderId=${orderId}`);
-
       if (!res.ok) {
         alert("Failed to generate proforma");
         return;
       }
-
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = `Proforma-${orderId}.pdf`;
       a.click();
-
       // 🔥 OPTIONAL: mark as generated (recommended)
       await fetch("/api/order/proformaGenerated", {
         method: "POST",
         body: JSON.stringify({ orderId })
       });
-
     } catch (err) {
       console.error(err);
       alert("Error generating proforma");
@@ -219,10 +175,8 @@ export default function SellersDashboard() {
     liveOrders: 0,
     issuedVouchers: 0,
   });
-
   const [catalogue, setCatalogue] = useState<any[]>([]);
   const [image, setImage] = useState<any>(null);
-
   const [loadingCatalogue, setLoadingCatalogue] = useState(true);
   const [uploadedProducts, setUploadedProducts] = useState<any[]>([]);
   const [previewErrors, setPreviewErrors] = useState<any[]>([]);
@@ -236,7 +190,6 @@ export default function SellersDashboard() {
     price: '',
     moq: '',
   });
-
   const [filters, setFilters] = useState<any>({
     name: '',
     category: '',
@@ -247,14 +200,12 @@ export default function SellersDashboard() {
     minMOQ: '',
     status: '',
   });
-
   const [catalogueTick, setCatalogueTick] = useState(0);
   const [sellerRFQs, setSellerRFQs] = useState<any[]>([]);
   const [resellers, setResellers] = useState<any[]>([]);
+  const [pendingResellers, setPendingResellers] = useState<any[]>([]);
   const [sellerOrders, setSellerOrders] = useState<any[]>([]);
-
   const [orderBeneficiaries, setOrderBeneficiaries] = useState<any[]>([]);
-
   useEffect(() => {
     if (tab === 'beneficiaries') {
       fetch('/api/seller/order/beneficiaries?sellerId=SELLER_001')
@@ -275,7 +226,6 @@ export default function SellersDashboard() {
   });
   const submitBid = async () => {
     if (!selectedRfq) return;
-
     await fetch('/api/seller/bid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -283,7 +233,6 @@ export default function SellersDashboard() {
         rfqId: selectedRfq.rfqId,
         sellerId: 'SELLER_001',
         sellerName: 'Seller OEM',
-
         locationQuotes: selectedRfq.items.map((item: any) => ({
           modelName: item.modelName,
           locations: item.locations.map((loc: any) => ({
@@ -292,17 +241,14 @@ export default function SellersDashboard() {
             quotedPrice: loc.quotedPrice
           }))
         })),
-
         moq: Number(bidForm.moq),
         deliveryTimeline: bidForm.deliveryTimeline,
         validityDays: Number(bidForm.validityDays),
         remarks: bidForm.remarks,
       }),
     });
-
     setActiveModal(null);
     setSelectedRfq(null);
-
     setBidForm({
       quotedUnitPrice: '',
       moq: '',
@@ -311,29 +257,21 @@ export default function SellersDashboard() {
       remarks: '',
     });
   };
-
   /* ---------- HELPERS ---------- */
-
   const fetchCatalogue = async () => {
     const res = await fetch('/api/seller/catalogue/list');
-
     if (!res.ok) {
       const text = await res.text();
       console.error('Catalogue API error:', res.status, text);
       return;
     }
-
     const data = await res.json();
     setCatalogue(data);
     setLoadingCatalogue(false);
   };
-
-
-
   const updateFilter = (key: string, value: string) => {
     setFilters((prev: any) => ({ ...prev, [key]: value }));
   };
-
   const handlePublishCatalogue = async () => {
     await fetch('/api/seller/catalogue', {
       method: 'POST',
@@ -346,14 +284,11 @@ export default function SellersDashboard() {
         engineCapacity: form.engine,
         exShowroomPrice: Number(form.price),
         moq: Number(form.moq),
-
         // 🔥 THIS WAS MISSING
         status: 'PUBLISHED',
       }),
     });
-
     await fetchCatalogue();
-
     setForm({
       modelName: '',
       category: '',
@@ -369,24 +304,19 @@ export default function SellersDashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-
     await fetchCatalogue();
   };
   const handleProductExcel = async (file: File) => {
     const reader = new FileReader();
-
     reader.onload = async (e) => {
       const data = new Uint8Array(e.target?.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
       const validRows: any[] = [];
       const errors: any[] = [];
-
       rows.forEach((r, index) => {
         const rowNumber = index + 2; // Excel row number
-
         const product = {
           oemName: String(r.OEMName || '').trim(),
           modelName: String(r.ModelName || '').trim(),
@@ -396,41 +326,33 @@ export default function SellersDashboard() {
           exShowroomPrice: Number(r.ExShowroomPrice),
           moq: Number(r.MOQ),
         };
-
         if (!product.modelName || !product.oemName) {
           errors.push({ row: rowNumber, message: "OEM Name and Model Name required" });
           return;
         }
-
         if (isNaN(product.exShowroomPrice) || product.exShowroomPrice <= 0) {
           errors.push({ row: rowNumber, message: "Invalid price" });
           return;
         }
-
         if (isNaN(product.moq) || product.moq <= 0) {
           errors.push({ row: rowNumber, message: "Invalid MOQ" });
           return;
         }
-
         validRows.push(product);
       });
-
       setUploadedProducts(validRows);
       setPreviewErrors(errors);
       setShowPreviewModal(true);
     };
-
     reader.readAsArrayBuffer(file);
   };
   const handleResellerExcel = async (file: File) => {
     const reader = new FileReader();
-
     reader.onload = async e => {
       const data = new Uint8Array(e.target?.result as ArrayBuffer);
       const workbook = XLSX.read(data, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
       for (const r of rows) {
         const payload = {
           resellerCode: String(r.ResellerCode || '').trim(),
@@ -444,22 +366,17 @@ export default function SellersDashboard() {
           pincode: String(r.PinCode || ''),
           status: r.Status === 'Inactive' ? 'Inactive' : 'Active',
         };
-
-
         if (!payload.resellerCode) continue;
-
         await fetch('/api/seller/resellers', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
       }
-
       // reload from API (persistent)
       const updated = await fetch('/api/seller/resellers').then(r => r.json());
       setResellers(updated);
     };
-
     reader.readAsArrayBuffer(file);
   };
   /* ---------- FILTERED DATA ---------- */
@@ -482,7 +399,6 @@ export default function SellersDashboard() {
         (!filters.minMOQ || Number(p.moq) >= Number(filters.minMOQ))
       );
   }, [catalogue, filters]);
-
   useEffect(() => {
     fetchCatalogue();
   }, []);
@@ -491,26 +407,20 @@ export default function SellersDashboard() {
       .then(r => r.json())
       .then(setSellerRFQs);
   }, []);
-
   useEffect(() => {
     fetch('/api/seller/order/list?sellerId=SELLER_001')
       .then(res => res.json())
       .then(setSellerOrders);
   }, []);
-
-
-
   useEffect(() => {
     const loadResellers = async () => {
       try {
         const res = await fetch('/api/seller/resellers');
-
         if (!res.ok) {
           console.error('Failed to fetch resellers');
           setResellers([]);
           return;
         }
-
         const data = await res.json();
         setResellers(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -518,26 +428,40 @@ export default function SellersDashboard() {
         setResellers([]);
       }
     };
-
     loadResellers();
   }, []);
-
+  useEffect(() => {
+    const loadPending = async () => {
+      const res = await fetch('/api/reseller/pending')
+      const data = await res.json()
+      setPendingResellers(data)
+    }
+    loadPending()
+  }, [])
+  const handleApproval = async (userId: string, action: string) => {
+    await fetch('/api/reseller/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, action })
+    })
+    // reload pending list
+    const res = await fetch('/api/reseller/pending')
+    const data = await res.json()
+    setPendingResellers(data)
+  }
   useEffect(() => {
     const fetchKpis = async () => {
       const sellerId = "SELLER_001";
-
       const [catalogueRes, rfqRes, orderRes, voucherRes] = await Promise.all([
         fetch("/api/seller/catalogue/list"),
         fetch("/api/seller/rfq/list"),
         fetch(`/api/seller/order/list?sellerId=${sellerId}`),
         fetch("/api/voucher/list"),
       ]);
-
       const catalogue = await catalogueRes.json();
       const rfqs = await rfqRes.json();
       const orders = await orderRes.json();
       const vouchers = await voucherRes.json();
-
       setKpiData({
         activeProducts: catalogue.filter((c: any) => c.status === "PUBLISHED").length,
         openRfqs: rfqs.filter((r: any) => r.status === "OPEN").length,
@@ -545,10 +469,8 @@ export default function SellersDashboard() {
         issuedVouchers: vouchers.filter((v: any) => v.sellerId === sellerId).length,
       });
     };
-
     fetchKpis();
   }, []);
-
   const addReseller = async () => {
     const payload = {
       resellerCode: (document.getElementById('r_code') as HTMLInputElement).value,
@@ -562,27 +484,21 @@ export default function SellersDashboard() {
       pincode: (document.getElementById('r_pincode') as HTMLInputElement).value,
       status: (document.getElementById('r_status') as HTMLSelectElement).value,
     };
-
-
     const res = await fetch('/api/seller/resellers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-
     if (!res.ok) {
       alert('Duplicate or invalid Reseller Code');
       return;
     }
-
     // Reload reseller list from API
     const updated = await fetch('/api/seller/resellers').then(r => r.json());
     setResellers(updated);
   };
-
   async function sendQuotation(rfq: any) {
     try {
-
       await fetch("/api/seller/sendQuotation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -590,33 +506,25 @@ export default function SellersDashboard() {
           rfqId: rfq.rfqId
         })
       });
-
       alert("Quotation sent to buyer");
-
     } catch (err) {
       alert("Failed to send quotation");
     }
   }
-
   let grouped: Record<string, any[]> = {};
-
   if (orderBeneficiaries && orderBeneficiaries.length > 0) {
     orderBeneficiaries.forEach((b: any) => {
       const city = b.beneficiary?.city || "UNKNOWN";
-
       if (!grouped[city]) grouped[city] = [];
       grouped[city].push(b);
     });
   }
   let allocationSummary: any[] = [];
-
   if (selectedOrder?.items) {
     selectedOrder.items.forEach((model: any) => {
       model.locations?.forEach((loc: any) => {
         const city = loc.city;
-
         const assigned = grouped[city]?.length || 0;
-
         allocationSummary.push({
           model: model.model || model.modelName,
           city,
@@ -626,67 +534,59 @@ export default function SellersDashboard() {
       });
     });
   }
-
   /* ================= RENDER ================= */
-
   return (
     <>
       <TopNav />
-
       <div className="min-h-screen bg-gray-50 p-8">
-        <div className="mb-10">
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Sellers Dashboard
-          </h1>
-          <p className="text-gray-500 mt-2 text-sm">
-            Manage Catalogue, RFQs, Resellers and Voucher Issuance
-          </p>
-        </div>
+        <div className="mb-8">
+          <div className="bg-gray-50 border rounded-2xl p-6 shadow-sm relative overflow-hidden">
 
+            {/* subtle soft overlay (keeps premium feel) */}
+            <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
+
+            <div className="relative z-10">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-800">
+                Sellers Dashboard
+              </h1>
+
+              <p className="text-sm mt-2 text-gray-500">
+                Manage catalogue, RFQs, resellers and voucher issuance
+              </p>
+            </div>
+
+          </div>
+        </div>
         {/* KPI */}
         <div className="grid grid-cols-4 gap-6 mb-10">
-          <div className="bg-white rounded-xl shadow p-6">
-            <p className="text-sm text-gray-500">Active Products</p>
-            <p className="text-2xl font-bold">{kpiData.activeProducts}</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <p className="text-sm text-gray-500">Open RFQs</p>
-            <p className="text-2xl font-bold">{kpiData.openRfqs}</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <p className="text-sm text-gray-500">Live Orders</p>
-            <p className="text-2xl font-bold">{kpiData.liveOrders}</p>
-          </div>
-
-          <div className="bg-white rounded-xl shadow p-6">
-            <p className="text-sm text-gray-500">Issued Vouchers</p>
-            <p className="text-2xl font-bold">{kpiData.issuedVouchers}</p>
-          </div>
+          {[
+            { label: 'Active Products', value: kpiData.activeProducts, color: 'bg-blue-50' },
+            { label: 'Open RFQs', value: kpiData.openRfqs, color: 'bg-yellow-50' },
+            { label: 'Live Orders', value: kpiData.liveOrders, color: 'bg-green-50' },
+            { label: 'Issued Vouchers', value: kpiData.issuedVouchers, color: 'bg-purple-50' },
+          ].map((k, i) => (
+            <div key={i} className={`${k.color} rounded-2xl p-5 shadow-sm border`}>
+              <p className="text-sm text-gray-600">{k.label}</p>
+              <p className="text-2xl font-bold mt-1">{k.value}</p>
+            </div>
+          ))}
         </div>
 
+        {/* 🔥 VIEW RFQ MODAL */}
         {activeModal === 'viewRFQ' && selectedRfq && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white w-[700px] max-h-[80vh] overflow-auto p-6 rounded-xl shadow-xl">
-
               <h2 className="text-xl font-bold mb-4">RFQ Details</h2>
-
               <p><b>RFQ ID:</b> {selectedRfq.rfqId}</p>
               <p><b>Type:</b> {selectedRfq.rfqType}</p>
               <p><b>Status:</b> {selectedRfq.status}</p>
-
               <hr className="my-3" />
-
               <h3 className="font-semibold mb-2">Items</h3>
-
               {(selectedRfq.items || []).map((i: any, idx: number) => (
                 <div key={idx} className="border p-3 rounded mb-2">
-
                   <p><b>Model:</b> {i.modelName || '-'}</p>
                   <p><b>Fuel:</b> {i.fuelType || '-'}</p>
                   <p><b>Vehicle:</b> {i.vehicleType || '-'}</p>
-
                   <p className="mt-1"><b>Locations:</b></p>
                   <ul className="text-sm ml-4 list-disc">
                     {(i.locations || []).map((l: any, j: number) => (
@@ -695,10 +595,8 @@ export default function SellersDashboard() {
                       </li>
                     ))}
                   </ul>
-
                 </div>
               ))}
-
               <div className="flex justify-end mt-4">
                 <button
                   className="px-4 py-2 bg-gray-600 text-white rounded"
@@ -707,17 +605,14 @@ export default function SellersDashboard() {
                   Close
                 </button>
               </div>
-
             </div>
           </div>
         )}
 
         {/* 🔥 RFQ RESPONSE MODAL */}
         {activeModal === 'respondRFQ' && selectedRfq && (
-
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white w-full max-w-4xl rounded-xl shadow-lg p-6 overflow-y-auto max-h-[90vh]">
-
               {/* ===== HEADER ===== */}
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-semibold">
@@ -733,14 +628,12 @@ export default function SellersDashboard() {
                   ✕
                 </button>
               </div>
-
               {/* ===== RFQ META ===== */}
               <div className="bg-gray-50 p-4 rounded mb-6 text-sm">
                 <p><strong>Buyer:</strong> {selectedRfq.buyerName || selectedRfq.buyerId}</p>
                 <p><strong>RFQ Type:</strong> {selectedRfq.rfqType}</p>
                 <p><strong>Status:</strong> {selectedRfq.status}</p>
               </div>
-
               {/* ===== ITEMS TABLE ===== */}
               <h3 className="font-medium mb-3">Requested Models</h3>
               <div className="grid md:grid-cols-2 gap-4 mb-6">
@@ -756,7 +649,6 @@ export default function SellersDashboard() {
                     }
                   />
                 </div>
-
                 <div>
                   <label className="text-sm font-medium">Delivery Timeline</label>
                   <input
@@ -768,7 +660,6 @@ export default function SellersDashboard() {
                     }
                   />
                 </div>
-
                 <div>
                   <label className="text-sm font-medium">Quote Validity (days)</label>
                   <input
@@ -793,7 +684,6 @@ export default function SellersDashboard() {
                     }
                   />
                 </div>
-
                 <div>
                   <label className="text-sm font-medium">Remarks</label>
                   <input
@@ -805,9 +695,7 @@ export default function SellersDashboard() {
                     }
                   />
                 </div>
-
               </div>
-
               <table className="w-full text-sm border mb-6">
                 <thead className="bg-gray-100">
                   <tr>
@@ -821,22 +709,18 @@ export default function SellersDashboard() {
                   {selectedRfq.items.map((item: any, itemIdx: number) =>
                     (item.locations || []).map((loc: any, locIdx: number) => (
                       <tr key={`${itemIdx}-${locIdx}`} className="border-t">
-
                         {/* Model */}
                         <td className="p-2">
                           {item.modelName || `${item.fuelType} ${item.vehicleType}`}
                         </td>
-
                         {/* City */}
                         <td className="p-2">
                           {loc.city}
                         </td>
-
                         {/* Quantity */}
                         <td className="p-2 text-center">
                           {loc.qty}
                         </td>
-
                         {/* Quoted Price */}
                         <td className="p-2">
                           <input
@@ -846,24 +730,19 @@ export default function SellersDashboard() {
                             value={loc.quotedPrice || ''}
                             onChange={(e) => {
                               const value = Number(e.target.value);
-
                               setSelectedRfq((prev: any) => {
                                 const updated = { ...prev };
-
                                 updated.items[itemIdx].locations[locIdx].quotedPrice = value;
-
                                 return updated;
                               });
                             }}
                           />
                         </td>
-
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
-
               {/* ===== ACTIONS ===== */}
               <div className="flex justify-end gap-4">
                 <button
@@ -872,11 +751,9 @@ export default function SellersDashboard() {
                     setActiveModal(null);
                     setSelectedRfq(null);
                   }}
-
                 >
                   Cancel
                 </button>
-
                 <button
                   className="px-4 py-2 bg-indigo-600 text-white rounded"
                   onClick={submitBid}
@@ -884,39 +761,28 @@ export default function SellersDashboard() {
                   Submit Bid
                 </button>
               </div>
-
             </div>
           </div>
         )}
-
+        {/* 🔥 VIEW ORDER MODAL */}
         {activeModal === 'viewOrder' && selectedOrder && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-
             <div className="bg-white w-[700px] max-h-[85vh] overflow-auto p-6 rounded-xl shadow-xl">
-
               <h2 className="text-xl font-bold mb-4">Order Details</h2>
-
               <p><b>Order ID:</b> {selectedOrder.orderId}</p>
               <p><b>Buyer:</b> {selectedOrder.buyerName || selectedOrder.buyerId}</p>
               <p><b>Status:</b> {selectedOrder.status}</p>
               <p><b>RFQ ID:</b> {selectedOrder.rfqId}</p>
-
               <hr className="my-3" />
-
               <h3 className="font-semibold mb-2">Items</h3>
-
               {(selectedOrder.items || []).map((i: any, idx: number) => (
                 <div key={idx} className="border p-3 rounded mb-3">
-
                   <p><b>Model:</b> {i.modelName}</p>
-
                   <p><b>Total Qty:</b> {i.requestedQty}</p>
                   <p><b>Unit Price:</b> ₹{i.unitPrice}</p>
-
                   {/* 🔥 CITY-WISE BREAKDOWN */}
                   <div className="mt-2">
                     <p className="font-medium text-sm">City-wise Distribution:</p>
-
                     <ul className="ml-4 list-disc text-sm text-gray-600">
                       {(i.locations || []).map((l: any, j: number) => (
                         <li key={j}>
@@ -925,22 +791,16 @@ export default function SellersDashboard() {
                       ))}
                     </ul>
                   </div>
-
                 </div>
               ))}
-
               <div className="flex justify-between mt-4">
-
                 {/* DOWNLOAD BUTTON */}
-
-
                 <button
                   className="px-4 py-2 bg-indigo-600 text-white rounded"
                   onClick={() => downloadOrderPDF(selectedOrder)}
                 >
                   PDF
                 </button>
-
                 {/* CLOSE */}
                 <button
                   className="px-4 py-2 bg-gray-600 text-white rounded"
@@ -948,170 +808,220 @@ export default function SellersDashboard() {
                 >
                   Close
                 </button>
-
               </div>
-
             </div>
           </div>
         )}
 
         {/* TABS */}
-        {/* TABS */}
-        <div className="flex gap-6 mb-6 border-b">
-          {(['catalogue', 'rfqs', 'orders', 'beneficiaries', 'redemptions', 'resellers'] as const).map(
-            t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`pb-2 ${tab === t
-                  ? 'font-semibold border-b-2 border-indigo-600'
-                  : 'text-gray-500 hover:text-black'
-                  }`}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            )
-          )}
+        <div className="bg-white p-1 rounded-xl shadow-sm inline-flex gap-2 mb-6">
+          {(['catalogue', 'rfqs', 'orders', 'beneficiaries', 'redemptions', 'resellers'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`
+              px-4 py-2 rounded-lg text-sm font-medium transition
+                 ${tab === t
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'text-gray-600 hover:bg-gray-100'
+                }
+                `}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
         </div>
 
 
         {/* ================= CATALOGUE ================= */}
         {tab === 'catalogue' && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            {/* Add + Bulk Upload */}
-            <div className="grid md:grid-cols-2 gap-8 mb-6">
-              <div>
-                <h3 className="font-semibold mb-2">Add Catalogue Item</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    className="border p-2"
-                    placeholder="Model Name"
-                    value={form.modelName}
-                    onChange={e =>
-                      setForm({ ...form, modelName: e.target.value })
-                    }
-                  />
-                  <select
-                    className="border p-2"
-                    value={form.category}
-                    onChange={e =>
-                      setForm({ ...form, category: e.target.value })
-                    }
-                  >
-                    <option value="">Select</option>
-                    <option value="2W EV">2W EV</option>
-                    <option value="2W ICE">2W ICE</option>
-                  </select>
-                  <input
-                    className="border p-2"
-                    placeholder="Engine"
-                    value={form.engine}
-                    onChange={e =>
-                      setForm({ ...form, engine: e.target.value })
-                    }
-                  />
-                  <input
-                    className="border p-2"
-                    placeholder="Price"
-                    value={form.price}
-                    onChange={e =>
-                      setForm({ ...form, price: e.target.value })
-                    }
-                  />
-                  <input
-                    className="border p-2"
-                    placeholder="MOQ"
-                    value={form.moq}
-                    onChange={e =>
-                      setForm({ ...form, moq: e.target.value })
-                    }
-                  />
-                  <input className="border p-2 rounded" placeholder="Specifications (Battery, Range, Engine etc.)" />
+          <div className="grid md:grid-cols-3 gap-6">
 
-                  <input
-                    type="file"
-                    onChange={(e) => setImage(e.target.files?.[0])}
-                    className="border p-2 rounded"
-                  />
-                </div>
+            {/* ================= LEFT PANEL ================= */}
+            <div className="bg-gray-50 p-5 rounded-2xl border shadow-sm">
+              <h3 className="font-semibold mb-4 text-lg">Add Catalogue Item</h3>
 
-                <button
-                  className="mt-4 bg-indigo-600 text-white px-4 py-2"
-                  onClick={handlePublishCatalogue}
-                >
-                  Publish
-                </button>
+              <div className="grid grid-cols-1 gap-3">
 
-
-
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Bulk Upload Catalogue</h3>
                 <input
-                  ref={productFileRef}
-                  type="file"
-                  accept=".xlsx,.xls"
+                  className="border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Model Name"
+                  value={form.modelName}
                   onChange={e =>
-                    e.target.files && handleProductExcel(e.target.files[0])
+                    setForm({ ...form, modelName: e.target.value })
                   }
                 />
+
+                <select
+                  className="border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  value={form.category}
+                  onChange={e =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                >
+                  <option value="">Select Category</option>
+                  <option value="2W EV">2W EV</option>
+                  <option value="2W ICE">2W ICE</option>
+                </select>
+
+                <input
+                  className="border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Engine"
+                  value={form.engine}
+                  onChange={e =>
+                    setForm({ ...form, engine: e.target.value })
+                  }
+                />
+
+                <input
+                  className="border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Price"
+                  value={form.price}
+                  onChange={e =>
+                    setForm({ ...form, price: e.target.value })
+                  }
+                />
+
+                <input
+                  className="border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="MOQ"
+                  value={form.moq}
+                  onChange={e =>
+                    setForm({ ...form, moq: e.target.value })
+                  }
+                />
+
+                <input
+                  className="border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  placeholder="Specifications (Battery, Range, Engine etc.)"
+                />
+
+                <input
+                  type="file"
+                  onChange={(e) => setImage(e.target.files?.[0])}
+                  className="border rounded-lg p-2"
+                />
+
+                <button
+                  className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg shadow-sm transition"
+                  onClick={handlePublishCatalogue}
+                >
+                  Publish Catalogue
+                </button>
+
               </div>
             </div>
 
-            {/* Catalogue Table */}
-            <table className="w-full text-sm border">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="p-2 text-left">Model</th>
-                  <th className="p-2">Category</th>
-                  <th className="p-2">Engine</th>
-                  <th className="p-2">Price</th>
-                  <th className="p-2">MOQ</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Action</th>
-                </tr>
-              </thead>
 
-              <tbody>
-                {filteredPublishedProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-4 text-center text-gray-400">
-                      No catalogue items published yet
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPublishedProducts.map((p, i) => (
-                    <tr key={p.id || i} className="border-t">
-                      <td className="p-2">{p.model || p.modelName}</td>
+            {/* ================= RIGHT PANEL ================= */}
+            <div className="md:col-span-2 space-y-6">
 
-                      <td className="p-2">{p.category}</td>
-                      <td className="p-2">{p.engineCapacity || '—'}</td>
-                      <td className="p-2">₹{p.exShowroomPrice}</td>
+              {/* ===== BULK UPLOAD ===== */}
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <h3 className="font-semibold mb-3">Bulk Upload Catalogue</h3>
 
-                      <td className="p-2">{p.moq}</td>
-                      <td className="p-2">
-                        <span className="text-green-600 font-medium">Published</span>
-                      </td>
-                      <td className="p-2">
-                        <button
-                          onClick={() => handleDiscontinue(p.id)}
-                          disabled={discontinuingId === p.id}
-                          className={`px-3 py-1 rounded text-sm
-                ${discontinuingId === p.id
-                              ? 'bg-gray-300 text-gray-600'
-                              : 'bg-red-600 text-white hover:bg-red-700'
-                            }`}
-                        >
-                          {discontinuingId === p.id ? 'Discontinuing…' : 'Discontinue'}
-                        </button>
-                      </td>
+                <div className="border-2 border-dashed rounded-xl p-6 text-center hover:bg-gray-50 transition">
+                  <p className="text-sm text-gray-500 mb-2">
+                    Upload Excel (.xlsx / .xls)
+                  </p>
+
+                  <input
+                    ref={productFileRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={e =>
+                      e.target.files && handleProductExcel(e.target.files[0])
+                    }
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+
+
+              {/* ===== TABLE ===== */}
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-lg">Published Catalogue</h3>
+
+                  <button
+                    onClick={downloadCatalogue}
+                    className="text-sm bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
+                  >
+                    Download CSV
+                  </button>
+                </div>
+
+                <table className="w-full text-sm border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-gray-500 text-xs">
+                      <th className="text-left p-2">Model</th>
+                      <th className="p-2">Category</th>
+                      <th className="p-2">Engine</th>
+                      <th className="p-2">Price</th>
+                      <th className="p-2">MOQ</th>
+                      <th className="p-2">Status</th>
+                      <th className="p-2">Action</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
 
+                  <tbody>
+                    {filteredPublishedProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-6 text-center text-gray-400">
+                          No catalogue items published yet
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredPublishedProducts.map((p, i) => (
+                        <tr
+                          key={p.id || i}
+                          className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                        >
+                          <td className="p-2 font-medium">
+                            {p.model || p.modelName}
+                          </td>
+
+                          <td className="p-2">{p.category}</td>
+
+                          <td className="p-2">
+                            {p.engineCapacity || '—'}
+                          </td>
+
+                          <td className="p-2 font-semibold">
+                            ₹{p.exShowroomPrice}
+                          </td>
+
+                          <td className="p-2">{p.moq}</td>
+
+                          <td className="p-2">
+                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                              Published
+                            </span>
+                          </td>
+
+                          <td className="p-2">
+                            <button
+                              onClick={() => handleDiscontinue(p.id)}
+                              disabled={discontinuingId === p.id}
+                              className={`px-3 py-1 rounded text-xs transition
+                        ${discontinuingId === p.id
+                                  ? 'bg-gray-200 text-gray-500'
+                                  : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                }`}
+                            >
+                              {discontinuingId === p.id
+                                ? 'Discontinuing…'
+                                : 'Discontinue'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
           </div>
         )}
 
@@ -1300,387 +1210,589 @@ export default function SellersDashboard() {
         )}
         {/* ================= RFQS ================= */}
 
-
         {tab === 'rfqs' && USER_ROLE === 'seller' && (
+          <div className="space-y-4">
 
+            {/* ================= HEADER ================= */}
+            <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center">
+              <h3 className="font-semibold text-lg">RFQs Received</h3>
 
-          <div className="bg-white p-6 rounded-xl shadow">
-            <table className="w-full text-sm border">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="p-2 text-left">RFQ ID</th>
-                  <th className="p-2 text-left">Buyer</th>
-                  <th className="p-2 text-left">Type</th>
-                  <th className="p-2 text-left">Models</th>
-                  <th className="p-2 text-left">Total Qty</th>
-                  <th className="p-2 text-left">Status</th>
-                  <th className="p-2 text-left">Action</th>
-                </tr>
-              </thead>
+              <span className="text-sm text-gray-500">
+                {sellerRFQs.length} RFQs
+              </span>
+            </div>
 
+            {/* ================= TABLE ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm overflow-x-auto">
 
+              <table className="w-full text-sm border-separate border-spacing-y-2">
 
-              <tbody>
-                {sellerRFQs.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center p-4 text-gray-400">
-                      No RFQs available
-                    </td>
+                <thead>
+                  <tr className="text-gray-500 text-xs">
+                    <th className="text-left p-2">RFQ ID</th>
+                    <th className="p-2">Buyer</th>
+                    <th className="p-2">Type</th>
+                    <th className="p-2">Models</th>
+                    <th className="p-2">Total Qty</th>
+                    <th className="p-2">Status</th>
+                    <th className="p-2">Action</th>
                   </tr>
-                ) : (
-                  sellerRFQs.map((r: any) => {
+                </thead>
 
-                    const items = Array.isArray(r.items) ? r.items : [];
+                <tbody>
+                  {sellerRFQs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-6 text-center text-gray-400">
+                        No RFQs available
+                      </td>
+                    </tr>
+                  ) : (
+                    sellerRFQs.map((r: any) => {
 
-                    let scopeDisplay = '';
-                    let totalQty = 0;
+                      const items = Array.isArray(r.items) ? r.items : [];
+                      let scopeDisplay = '';
+                      let totalQty = 0;
 
-                    if (r.rfqType === 'MODEL') {
-                      scopeDisplay = items
-                        .map((i: any) => i.modelName || '—')
-                        .join(', ');
+                      if (r.rfqType === 'MODEL') {
+                        scopeDisplay = items
+                          .map((i: any) => i.modelName || '—')
+                          .join(', ');
 
-                      totalQty = items.reduce((sum: number, i: any) => {
-                        const locQty = (i.locations || []).reduce(
-                          (s: number, l: any) => s + Number(l.qty || 0),
+                        totalQty = items.reduce((sum: number, i: any) => {
+                          const locQty = (i.locations || []).reduce(
+                            (s: number, l: any) => s + Number(l.qty || 0),
+                            0
+                          );
+                          return sum + locQty;
+                        }, 0);
+                      } else {
+                        const b = items[0] || {};
+                        scopeDisplay = `${b.fuelType || ''} ${b.vehicleType || ''} 
+                (${b.minSpec || ''}-${b.maxSpec || ''})`;
+
+                        totalQty = (b.locations || []).reduce(
+                          (sum: number, l: any) => sum + Number(l.qty || 0),
                           0
                         );
-                        return sum + locQty;
-                      }, 0);
+                      }
 
-                    } else {
-                      const b = items[0] || {};
+                      return (
+                        <tr
+                          key={r.rfqId}
+                          className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                        >
+                          <td className="p-2 font-medium">{r.rfqId}</td>
 
-                      scopeDisplay = `${b.fuelType || ''} ${b.vehicleType || ''} 
-                      (${b.minSpec || ''}-${b.maxSpec || ''})`;
+                          <td className="p-2">{r.buyerName || 'Corporate'}</td>
 
-                      totalQty = (b.locations || []).reduce(
-                        (sum: number, l: any) => sum + Number(l.qty || 0),
-                        0
-                      );
-                    }
+                          <td className="p-2">{r.rfqType}</td>
 
+                          <td className="p-2 text-gray-600">
+                            {scopeDisplay || '—'}
+                          </td>
 
-                    return (
-                      <tr key={r.rfqId} className="border-t">
-                        <td className="p-2">{r.rfqId}</td>
-                        <td className="p-2">{r.buyerName || 'Corporate'}</td>
-                        <td className="p-2">{r.rfqType}</td>
+                          <td className="p-2 font-semibold">{totalQty}</td>
 
-                        <td className="p-2">{scopeDisplay || '—'}</td>
-                        <td className="p-2">{totalQty}</td>
-
-                        <td className="p-2">
-                          <span className="font-medium">
-                            {r.status}
-                          </span>
-                        </td>
-
-                        <td className="p-2">
-                          <div className="flex justify-start gap-2">
-                            <button
-                              className="px-3 py-1 bg-gray-700 text-white rounded text-sm"
-                              onClick={() => {
-                                setSelectedRfq(r);
-                                setActiveModal('viewRFQ');
-                              }}
+                          {/* STATUS (UI ONLY IMPROVED) */}
+                          <td className="p-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium
+                        ${r.status === 'OPEN'
+                                  ? 'bg-green-100 text-green-700'
+                                  : r.status === 'RESPONDED'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-gray-200 text-gray-600'
+                                }`}
                             >
-                              View RFQ
-                            </button>
-                            {r.status === 'OPEN' && (
+                              {r.status}
+                            </span>
+                          </td>
+
+                          {/* ACTIONS (UNCHANGED LOGIC) */}
+                          <td className="p-2">
+                            <div className="flex flex-wrap gap-2">
+
                               <button
-                                className="px-3 py-1 bg-indigo-600 text-white rounded text-sm"
+                                className="px-3 py-1 rounded-lg text-xs bg-gray-700 text-white hover:bg-gray-800 transition"
                                 onClick={() => {
                                   setSelectedRfq(r);
-                                  setActiveModal('respondRFQ');
+                                  setActiveModal('viewRFQ');
                                 }}
                               >
-                                Respond
+                                View RFQ
                               </button>
-                            )}
-                            {r.status === 'RESPONDED' && (
-                              <div className="flex gap-2">
 
+                              {r.status === 'OPEN' && (
                                 <button
-                                  className="px-3 py-1 bg-gray-600 text-white rounded text-sm"
-                                  onClick={() => viewQuotation(r)}
+                                  className="px-3 py-1 rounded-lg text-xs bg-indigo-600 text-white hover:bg-indigo-700 transition"
+                                  onClick={() => {
+                                    setSelectedRfq(r);
+                                    setActiveModal('respondRFQ');
+                                  }}
                                 >
-                                  View
+                                  Respond
                                 </button>
+                              )}
 
-                                <button
-                                  className="px-3 py-1 bg-green-600 text-white rounded text-sm"
-                                  onClick={() => downloadQuotation(r)}
-                                >
-                                  Download
-                                </button>
+                              {r.status === 'RESPONDED' && (
+                                <>
+                                  <button
+                                    className="px-3 py-1 rounded-lg text-xs bg-gray-600 text-white hover:bg-gray-700 transition"
+                                    onClick={() => viewQuotation(r)}
+                                  >
+                                    View
+                                  </button>
 
-                                <button
-                                  className="px-3 py-1 bg-indigo-600 text-white rounded text-sm"
-                                  onClick={() => sendQuotation(r)}
-                                >
-                                  Send
-                                </button>
+                                  <button
+                                    className="px-3 py-1 rounded-lg text-xs bg-green-600 text-white hover:bg-green-700 transition"
+                                    onClick={() => downloadQuotation(r)}
+                                  >
+                                    Download
+                                  </button>
 
-                              </div>
-                            )}
+                                  <button
+                                    className="px-3 py-1 rounded-lg text-xs bg-indigo-600 text-white hover:bg-indigo-700 transition"
+                                    onClick={() => sendQuotation(r)}
+                                  >
+                                    Send
+                                  </button>
+                                </>
+                              )}
 
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
 
+              </table>
+            </div>
 
-            </table>
           </div>
         )}
 
         {/* ================= ORDERS ================= */}
         {tab === 'orders' && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="p-2 text-left">Order ID</th>
-                  <th className="p-2 text-left">Buyer</th>
-                  <th className="p-2 text-left">Items</th>
-                  <th className="p-2 text-left">Order Value</th>
-                  <th className="p-2 text-left">Delivery</th>
-                  <th className="p-2 text-left">Status</th>
-                  <th className="p-2 text-left">Action</th>
-                </tr>
-              </thead>
+          <div className="space-y-4">
 
-              <tbody>
-                {sellerOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="text-center p-4 text-gray-400">
-                      No orders yet
-                    </td>
+            {/* ================= HEADER ================= */}
+            <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center">
+              <h3 className="font-semibold text-lg">Orders</h3>
+              <span className="text-sm text-gray-500">
+                {sellerOrders.length} Orders
+              </span>
+            </div>
+
+            {/* ================= TABLE ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm overflow-x-auto">
+
+              <table className="w-full text-sm border-separate border-spacing-y-2">
+
+                <thead>
+                  <tr className="text-gray-500 text-xs">
+                    <th className="text-left p-2">Order ID</th>
+                    <th className="p-2">Buyer</th>
+                    <th className="p-2">Items</th>
+                    <th className="p-2">Order Value</th>
+                    <th className="p-2">Delivery</th>
+                    <th className="p-2">Status</th>
+                    <th className="p-2">Action</th>
                   </tr>
-                ) : (
-                  sellerOrders.map((o: any) => (
-                    <tr key={o.orderId} className="border-t">
-                      <td className="p-2">{o.orderId}</td>
+                </thead>
 
-                      <td className="p-2">
-                        {o.buyerName || o.buyerId}
-                      </td>
-                      <td className="p-2">{o.rfqId}</td>
-                      <td className="p-2">
-                        {Array.isArray(o.items) && o.items.length > 0
-                          ? o.items
-                            .map((i: any) =>
-                              `${i.modelName || 'Model'} (${i.requestedQty || 0})`
-                            )
-                            .join(', ')
-                          : '—'}
-                      </td>
-                      <td className="p-2">
-                        {o.totalQty ? `${o.totalQty} units` : '—'}
-                      </td>
-                      <td className="p-2">
-                        {o.orderValue ? `₹${o.orderValue}` : '—'}
-                      </td>
-                      <td className="p-2">
-                        {o.deliveryTimeline
-                          ? `${o.deliveryTimeline} days`
-                          : '—'}
-                      </td>
-                      <td className="p-2">
-                        <span className="text-green-600 font-medium">
-                          {o.status}
-                        </span>
-                      </td>
-                      <td className="p-2 flex gap-2">
-
-                        {/* ✅ 1. VIEW ORDER */}
-                        <button
-                          className="px-2 py-1 bg-gray-600 text-white rounded text-xs"
-                          onClick={() => {
-                            setSelectedOrder(o)
-                            setActiveModal("viewOrder")
-                          }}
-                        >
-                          View
-                        </button>
-
-                        {/* ✅ 2. PROFORMA */}
-                        <button
-                          className="px-2 py-1 bg-indigo-600 text-white rounded text-xs"
-                          onClick={() => generateProforma(o.orderId)}
-                        >
-                          {o.proformaGenerated ? "Download Proforma" : "Generate Proforma"}
-                        </button>
-
-                        {/* ✅ 3. PAYMENT FLOW */}
-                        {o.paymentStatus === "SUBMITTED" && (
-                          <button
-                            className="px-2 py-1 bg-green-700 text-white rounded text-xs"
-                            onClick={() => {
-                              setSelectedOrder(o)
-                              setActiveModal(null)
-                              setShowPaymentModal(true)
-                            }}
-                          >
-                            Verify Payment
-                          </button>
-                        )}
-
-                        {o.paymentStatus === "RECEIPT_ISSUED" && (
-                          <button
-                            className="px-2 py-1 bg-green-600 text-white rounded text-xs"
-                            onClick={async () => {
-                              try {
-                                const res = await fetch(`/api/documents/receipt/pdf?orderId=${o.orderId}`)
-
-                                if (!res.ok) {
-                                  alert("Receipt not available")
-                                  return
-                                }
-
-                                const blob = await res.blob()
-                                const url = window.URL.createObjectURL(blob)
-
-                                const a = document.createElement("a")
-                                a.href = url
-                                a.download = `Receipt-${o.orderId}.pdf`
-                                a.click()
-
-                              } catch (err) {
-                                console.error(err)
-                                alert("Error downloading receipt")
-                              }
-                            }}
-                          >
-                            Download Receipt
-                          </button>
-                        )}
-
+                <tbody>
+                  {sellerOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center p-6 text-gray-400">
+                        No orders yet
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    sellerOrders.map((o: any) => (
+                      <tr
+                        key={o.orderId}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                      >
+                        <td className="p-2 font-medium">{o.orderId}</td>
+
+                        <td className="p-2">
+                          {o.buyerName || o.buyerId}
+                        </td>
+
+                        <td className="p-2 text-gray-600">
+                          {Array.isArray(o.items) && o.items.length > 0
+                            ? o.items
+                              .map((i: any) =>
+                                `${i.modelName || 'Model'} (${i.requestedQty || 0})`
+                              )
+                              .join(', ')
+                            : '—'}
+                        </td>
+
+                        <td className="p-2 font-semibold">
+                          {o.totalQty ? `${o.totalQty} units` : '—'}
+                        </td>
+
+                        <td className="p-2">
+                          {o.orderValue ? `₹${o.orderValue}` : '—'}
+                        </td>
+
+                        <td className="p-2">
+                          {o.deliveryTimeline
+                            ? `${o.deliveryTimeline} days`
+                            : '—'}
+                        </td>
+
+                        {/* STATUS BADGE (UI ONLY) */}
+                        <td className="p-2">
+                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+                            {o.status}
+                          </span>
+                        </td>
+
+                        {/* ACTIONS (UNCHANGED LOGIC) */}
+                        <td className="p-2">
+                          <div className="flex flex-wrap gap-2">
+
+                            {/* VIEW */}
+                            <button
+                              className="px-3 py-1 rounded-lg text-xs bg-gray-700 text-white hover:bg-gray-800 transition"
+                              onClick={() => {
+                                setSelectedOrder(o)
+                                setActiveModal("viewOrder")
+                              }}
+                            >
+                              View
+                            </button>
+
+                            {/* PROFORMA */}
+                            <button
+                              className="px-3 py-1 rounded-lg text-xs bg-indigo-600 text-white hover:bg-indigo-700 transition"
+                              onClick={() => generateProforma(o.orderId)}
+                            >
+                              {o.proformaGenerated
+                                ? "Download Proforma"
+                                : "Generate Proforma"}
+                            </button>
+
+                            {/* VERIFY PAYMENT */}
+                            {o.paymentStatus === "SUBMITTED" && (
+                              <button
+                                className="px-3 py-1 rounded-lg text-xs bg-yellow-600 text-white hover:bg-yellow-700 transition"
+                                onClick={() => {
+                                  setSelectedOrder(o)
+                                  setActiveModal(null)
+                                  setShowPaymentModal(true)
+                                }}
+                              >
+                                Verify Payment
+                              </button>
+                            )}
+
+                            {/* DOWNLOAD RECEIPT */}
+                            {o.paymentStatus === "RECEIPT_ISSUED" && (
+                              <button
+                                className="px-3 py-1 rounded-lg text-xs bg-green-600 text-white hover:bg-green-700 transition"
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch(`/api/documents/receipt/pdf?orderId=${o.orderId}`)
+
+                                    if (!res.ok) {
+                                      alert("Receipt not available")
+                                      return
+                                    }
+
+                                    const blob = await res.blob()
+                                    const url = window.URL.createObjectURL(blob)
+
+                                    const a = document.createElement("a")
+                                    a.href = url
+                                    a.download = `Receipt-${o.orderId}.pdf`
+                                    a.click()
+
+                                  } catch (err) {
+                                    console.error(err)
+                                    alert("Error downloading receipt")
+                                  }
+                                }}
+                              >
+                                Download Receipt
+                              </button>
+                            )}
+
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+
+              </table>
+            </div>
+
           </div>
         )}
 
 
         {tab === 'beneficiaries' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Beneficiaries</CardTitle>
-            </CardHeader>
+          <div className="space-y-6">
 
-            <CardContent>
+            {/* ================= HEADER ================= */}
+            <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center">
+              <h3 className="font-semibold text-lg">Beneficiaries</h3>
 
-              {/* 🔥 PO vs Allocation Summary */}
-              {allocationSummary.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-2">Allocation Summary</h3>
+              <span className="text-sm text-gray-500">
+                {orderBeneficiaries.length} Records
+              </span>
+            </div>
 
-                  <table className="w-full text-sm mb-4">
-                    <thead>
-                      <tr>
-                        <th>Model</th>
-                        <th>City</th>
-                        <th>Allocated</th>
-                        <th>Required</th>
+            {/* ================= ALLOCATION SUMMARY ================= */}
+            {allocationSummary.length > 0 && (
+              <div className="bg-white p-5 rounded-2xl border shadow-sm">
+                <h3 className="font-semibold mb-4 text-gray-700">
+                  Allocation Summary
+                </h3>
+
+                <table className="w-full text-sm border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-gray-500 text-xs">
+                      <th className="text-left p-2">Model</th>
+                      <th className="p-2">City</th>
+                      <th className="p-2">Allocated</th>
+                      <th className="p-2">Required</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {allocationSummary.map((row, i) => (
+                      <tr
+                        key={i}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                      >
+                        <td className="p-2 font-medium">{row.model}</td>
+                        <td className="p-2">{row.city}</td>
+                        <td className="p-2 text-green-600 font-semibold">
+                          {row.assigned}
+                        </td>
+                        <td className="p-2 text-indigo-600 font-semibold">
+                          {row.required}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {allocationSummary.map((row, i) => (
-                        <tr key={i} className="border-t">
-                          <td>{row.model}</td>
-                          <td>{row.city}</td>
-                          <td>{row.assigned}</td>
-                          <td>{row.required}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-              {/* 🔥 Beneficiary Table */}
-              <table className="w-full text-sm">
+            {/* ================= BENEFICIARY TABLE ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm overflow-x-auto">
+
+              <table className="w-full text-sm border-separate border-spacing-y-2">
+
                 <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Beneficiary</th>
-                    <th>Mobile</th>
-                    <th>City</th>
-                    <th>Pincode</th>
-                    <th>Status</th>
+                  <tr className="text-gray-500 text-xs">
+                    <th className="text-left p-2">Order ID</th>
+                    <th className="p-2">Beneficiary</th>
+                    <th className="p-2">Mobile</th>
+                    <th className="p-2">City</th>
+                    <th className="p-2">Pincode</th>
+                    <th className="p-2">Status</th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {orderBeneficiaries.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center text-gray-400 p-4">
+                      <td colSpan={6} className="text-center text-gray-400 p-6">
                         No beneficiaries assigned yet
                       </td>
                     </tr>
                   ) : (
                     orderBeneficiaries.map((b: any, i: number) => (
-                      <tr key={i} className="border-t">
-                        <td>{b.orderId}</td>
-                        <td>{b.beneficiary?.name}</td>
-                        <td>{b.beneficiary?.mobile}</td>
-                        <td>{b.beneficiary?.city}</td>
-                        <td>{b.beneficiary?.pincode}</td>
-                        <td className="font-medium text-yellow-600">
-                          {b.voucherStatus}
+                      <tr
+                        key={i}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                      >
+                        <td className="p-2 font-medium">{b.orderId}</td>
+
+                        <td className="p-2">
+                          {b.beneficiary?.name}
                         </td>
+
+                        <td className="p-2">
+                          {b.beneficiary?.mobile}
+                        </td>
+
+                        <td className="p-2 text-gray-600">
+                          {b.beneficiary?.city}
+                        </td>
+
+                        <td className="p-2">
+                          {b.beneficiary?.pincode}
+                        </td>
+
+                        {/* STATUS BADGE */}
+                        <td className="p-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium
+                      ${b.voucherStatus === 'ISSUED'
+                                ? 'bg-green-100 text-green-700'
+                                : b.voucherStatus === 'MAPPED'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : b.voucherStatus === 'NO_RESELLER'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-gray-200 text-gray-600'
+                              }`}
+                          >
+                            {b.voucherStatus}
+                          </span>
+                        </td>
+
                       </tr>
                     ))
                   )}
                 </tbody>
+
               </table>
+            </div>
 
-            </CardContent>
-          </Card>
+          </div>
         )}
-
 
 
 
         {/* ================= REDEMPTIONS ================= */}
         {tab === 'redemptions' && (
-          <div className="bg-white p-6 rounded-xl shadow">
-            <table className="w-full text-sm">
-              <tbody>
-                {redemptions.map(r => (
-                  <tr key={r.id} className="border-t">
-                    <td>{r.id}</td>
-                    <td>{r.dealer}</td>
-                    <td>{r.amount}</td>
-                    <td>{r.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-6">
 
-            <h3 className="font-semibold mt-8 mb-4">Issued Vouchers</h3>
-            <table className="w-full text-sm">
-              <tbody>
-                {VOUCHERS.map(v => (
-                  <tr key={v.code} className="border-t">
-                    <td>{v.code}</td>
-                    <td>{v.orderId}</td>
-                    <td>{v.beneficiary}</td>
-                    <td>{v.value}</td>
-                    <td>{v.status}</td>
-                    <td>{v.validTill}</td>
+            {/* ================= REDEMPTIONS ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">Redemptions</h3>
+                <span className="text-sm text-gray-500">
+                  {redemptions.length} Records
+                </span>
+              </div>
+
+              <table className="w-full text-sm border-separate border-spacing-y-2">
+
+                <thead>
+                  <tr className="text-gray-500 text-xs">
+                    <th className="text-left p-2">Voucher ID</th>
+                    <th className="p-2">Dealer</th>
+                    <th className="p-2">Amount</th>
+                    <th className="p-2">Date</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {redemptions.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center text-gray-400 p-6">
+                        No redemptions yet
+                      </td>
+                    </tr>
+                  ) : (
+                    redemptions.map(r => (
+                      <tr
+                        key={r.id}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                      >
+                        <td className="p-2 font-medium">{r.id}</td>
+
+                        <td className="p-2">{r.dealer}</td>
+
+                        <td className="p-2 font-semibold text-green-600">
+                          ₹{r.amount}
+                        </td>
+
+                        <td className="p-2 text-gray-600">
+                          {r.date}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+
+              </table>
+            </div>
+
+
+            {/* ================= ISSUED VOUCHERS ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">Issued Vouchers</h3>
+                <span className="text-sm text-gray-500">
+                  {VOUCHERS.length} Vouchers
+                </span>
+              </div>
+
+              <table className="w-full text-sm border-separate border-spacing-y-2">
+
+                <thead>
+                  <tr className="text-gray-500 text-xs">
+                    <th className="text-left p-2">Voucher Code</th>
+                    <th className="p-2">Order ID</th>
+                    <th className="p-2">Beneficiary</th>
+                    <th className="p-2">Value</th>
+                    <th className="p-2">Status</th>
+                    <th className="p-2">Valid Till</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {VOUCHERS.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center text-gray-400 p-6">
+                        No vouchers issued
+                      </td>
+                    </tr>
+                  ) : (
+                    VOUCHERS.map(v => (
+                      <tr
+                        key={v.code}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                      >
+                        <td className="p-2 font-medium">{v.code}</td>
+
+                        <td className="p-2">{v.orderId}</td>
+
+                        <td className="p-2">{v.beneficiary}</td>
+
+                        <td className="p-2 font-semibold">
+                          ₹{v.value}
+                        </td>
+
+                        {/* STATUS BADGE */}
+                        <td className="p-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium
+                      ${v.status === 'Redeemed'
+                                ? 'bg-green-100 text-green-700'
+                                : v.status === 'Issued'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-gray-200 text-gray-600'
+                              }`}
+                          >
+                            {v.status}
+                          </span>
+                        </td>
+
+                        <td className="p-2 text-gray-600">
+                          {v.validTill}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+
+              </table>
+            </div>
+
           </div>
         )}
 
@@ -1692,113 +1804,135 @@ export default function SellersDashboard() {
 
         {/* ================= RESELLERS ================= */}
         {tab === 'resellers' && (
-          <div className="bg-white p-6 rounded-xl shadow space-y-6">
+          <div className="space-y-6">
 
-            {/* ADD RESELLER */}
-            <div className="grid md:grid-cols-3 gap-4">
+            {/* ================= PENDING APPROVALS ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <h3 className="font-semibold mb-4 text-red-600">
+                Pending Reseller Approvals
+              </h3>
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Reseller Code (AMDs)"
-                id="r_code"
-              />
+              {pendingResellers.length === 0 ? (
+                <p className="text-sm text-gray-500">No pending approvals</p>
+              ) : (
+                <table className="w-full text-sm border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-gray-500 text-xs">
+                      <th className="p-2 text-left">Username</th>
+                      <th className="p-2">Company</th>
+                      <th className="p-2">GST</th>
+                      <th className="p-2">Action</th>
+                    </tr>
+                  </thead>
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Company / Dealer Name"
-                id="r_company"
-              />
+                  <tbody>
+                    {pendingResellers.map((r: any) => (
+                      <tr
+                        key={r.userId}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm text-center"
+                      >
+                        <td className="p-2">{r.username}</td>
+                        <td className="p-2">{r.companyName}</td>
+                        <td className="p-2">{r.gstNumber}</td>
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Contact Name"
-                id="r_name"
-              />
+                        <td className="p-2 space-x-2">
+                          <button
+                            className="px-3 py-1 rounded-lg text-xs bg-green-600 text-white hover:bg-green-700 transition"
+                            onClick={() => handleApproval(r.userId, "APPROVE")}
+                          >
+                            Approve
+                          </button>
 
-              <input
-                className="border p-2 rounded"
-                placeholder="Mobile"
-                id="r_mobile"
-              />
-
-              <input
-                className="border p-2 rounded"
-                placeholder="Email"
-                id="r_email"
-              />
-
-              <input
-                className="border p-2 rounded"
-                placeholder="City"
-                id="r_city"
-              />
-
-              <input
-                className="border p-2 rounded"
-                placeholder="State"
-                id="r_state"
-              />
-
-              <input
-                className="border p-2 rounded"
-                placeholder="Pin Code"
-                id="r_pincode"
-              />
-
-              <select className="border p-2 rounded" id="r_status">
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-
+                          <button
+                            className="px-3 py-1 rounded-lg text-xs bg-red-600 text-white hover:bg-red-700 transition"
+                            onClick={() => handleApproval(r.userId, "REJECT")}
+                          >
+                            Reject
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
 
+            {/* ================= ADD RESELLER ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <h3 className="font-semibold mb-4">Add Reseller</h3>
 
+              <div className="grid md:grid-cols-3 gap-4">
 
-            <div className="mt-6">
-              <h3 className="font-semibold mb-2">Bulk Upload Resellers</h3>
+                <input className="border rounded-lg p-2" placeholder="Reseller Code (AMDs)" id="r_code" />
+                <input className="border rounded-lg p-2" placeholder="Company / Dealer Name" id="r_company" />
+                <input className="border rounded-lg p-2" placeholder="Contact Name" id="r_name" />
 
-              <input
-                ref={resellerFileRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="border p-2"
-                onChange={e =>
-                  e.target.files && handleResellerExcel(e.target.files[0])
-                }
-              />
-              <button
-                className="bg-indigo-600 text-white px-4 py-2 rounded"
-                onClick={addReseller}
-              >
-                Add Reseller
-              </button>
-              <p className="text-xs text-gray-500 mt-2">
-                Excel format: ResellerCode, Company, ContactName, Mobile, Email, City, State, PinCode, Status
-              </p>
+                <input className="border rounded-lg p-2" placeholder="Mobile" id="r_mobile" />
+                <input className="border rounded-lg p-2" placeholder="Email" id="r_email" />
+                <input className="border rounded-lg p-2" placeholder="City" id="r_city" />
+
+                <input className="border rounded-lg p-2" placeholder="State" id="r_state" />
+                <input className="border rounded-lg p-2" placeholder="Pin Code" id="r_pincode" />
+
+                <select className="border rounded-lg p-2" id="r_status">
+                  <option>Active</option>
+                  <option>Inactive</option>
+                </select>
+              </div>
+
+              {/* BULK UPLOAD */}
+              <div className="mt-6">
+                <h4 className="font-medium mb-2">Bulk Upload Resellers</h4>
+
+                <div className="flex flex-wrap gap-3 items-center">
+                  <input
+                    ref={resellerFileRef}
+                    type="file"
+                    accept=".xlsx,.xls"
+                    className="border rounded-lg p-2 text-sm"
+                    onChange={e =>
+                      e.target.files && handleResellerExcel(e.target.files[0])
+                    }
+                  />
+
+                  <button
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                    onClick={addReseller}
+                  >
+                    Add Reseller
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  Excel format: ResellerCode, Company, ContactName, Mobile, Email, City, State, PinCode, Status
+                </p>
+              </div>
             </div>
 
-            {/* ===== BULK UPLOAD RESELLERS ===== */}
 
+            {/* ================= REGISTERED RESELLERS ================= */}
+            <div className="bg-white p-5 rounded-2xl border shadow-sm">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold">Registered Resellers</h3>
 
-
-            {/* LIST RESELLERS */}
-            <div>
-              <h3 className="font-semibold mb-2">Registered Resellers</h3>
+                <span className="text-sm text-gray-500">
+                  {resellers.length} Resellers
+                </span>
+              </div>
 
               {resellers.length === 0 ? (
                 <p className="text-sm text-gray-500">No resellers added yet.</p>
               ) : (
-
-                <table className="w-full text-sm border">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="p-2">Reseller Code</th>
+                <table className="w-full text-sm border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-gray-500 text-xs">
+                      <th className="p-2 text-left">Code</th>
                       <th className="p-2">Company</th>
                       <th className="p-2">Contact</th>
                       <th className="p-2">City</th>
                       <th className="p-2">State</th>
-                      <th className="p-2">Pin Code</th>
+                      <th className="p-2">Pin</th>
                       <th className="p-2">Mobile</th>
                       <th className="p-2">Status</th>
                     </tr>
@@ -1806,19 +1940,33 @@ export default function SellersDashboard() {
 
                   <tbody>
                     {resellers.map((r, i) => (
-                      <tr key={i} className="border-t">
-                        <td className="p-2">{r.resellerCode}</td>
+                      <tr
+                        key={i}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                      >
+                        <td className="p-2 font-medium">{r.resellerCode}</td>
                         <td className="p-2">{r.companyName}</td>
                         <td className="p-2">{r.contactName}</td>
-                        <td className="p-2">{r.city}</td>
+                        <td className="p-2 text-gray-600">{r.city}</td>
                         <td className="p-2">{r.state}</td>
                         <td className="p-2">{r.pincode}</td>
                         <td className="p-2">{r.mobile}</td>
-                        <td className="p-2">{r.status}</td>
+
+                        <td className="p-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium
+                      ${r.status === 'Active'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-200 text-gray-600'
+                              }`}
+                          >
+                            {r.status}
+                          </span>
+                        </td>
+
                       </tr>
                     ))}
                   </tbody>
-
                 </table>
               )}
             </div>

@@ -10,14 +10,10 @@ function RedeemContent() {
 
   const [voucher, setVoucher] = useState<any>(null)
   const [dealerId, setDealerId] = useState<string | null>(null)
-
   const [status, setStatus] = useState("")
   const [loading, setLoading] = useState(false)
   const [loadingVoucher, setLoadingVoucher] = useState(true)
 
-  /* ===============================
-     AUTH CHECK (RESELLER ONLY)
-  =============================== */
   useEffect(() => {
     fetch('/api/auth/me')
       .then(res => res.json())
@@ -28,21 +24,14 @@ function RedeemContent() {
         }
 
         if (data.role !== "RESELLER") {
-          alert("Only dealers can redeem vouchers")
           router.push("/")
           return
         }
 
         setDealerId(data.userId)
       })
-      .catch(() => {
-        router.push("/login")
-      })
   }, [router])
 
-  /* ===============================
-     FETCH VOUCHER DETAILS
-  =============================== */
   useEffect(() => {
     if (!voucherId) return
 
@@ -55,22 +44,11 @@ function RedeemContent() {
           setStatus("❌ Voucher not found")
         }
       })
-      .catch(() => {
-        setStatus("Error loading voucher")
-      })
-      .finally(() => {
-        setLoadingVoucher(false)
-      })
+      .finally(() => setLoadingVoucher(false))
   }, [voucherId])
 
-  /* ===============================
-     REDEEM FUNCTION
-  =============================== */
   const redeem = async () => {
-    if (!voucherId || !dealerId) {
-      setStatus("Invalid request")
-      return
-    }
+    if (!voucherId || !dealerId) return
 
     setLoading(true)
 
@@ -78,10 +56,7 @@ function RedeemContent() {
       const res = await fetch("/api/voucher/redeem", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          voucherId,
-          dealerId
-        })
+        body: JSON.stringify({ voucherId, dealerId })
       })
 
       const data = await res.json()
@@ -91,57 +66,170 @@ function RedeemContent() {
         return
       }
 
-      setStatus("✅ Voucher Redeemed Successfully")
-    } catch {
-      setStatus("Something went wrong")
+      setStatus("SUCCESS")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="p-6 border rounded text-center">
-      <h2 className="text-xl font-bold mb-3">
-        Voucher Redemption
-      </h2>
+    <div className="min-h-screen grid md:grid-cols-2">
 
-      <p className="mb-4">
-        Voucher ID: {voucherId}
-      </p>
+      {/* ================= LEFT PANEL ================= */}
+      <div className="relative bg-[#0f172a] text-white flex flex-col justify-center px-16 py-20 overflow-hidden">
 
-      {loadingVoucher ? (
-        <p>Loading voucher...</p>
-      ) : voucher ? (
-        <div className="mb-4 text-left border p-3 rounded">
-          <p><b>Value:</b> ₹{voucher.value}</p>
-          <p><b>Status:</b> {voucher.status}</p>
-          <p><b>Expiry:</b> {new Date(voucher.expiryDate).toLocaleDateString()}</p>
+        {/* 🔥 Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-blue-500/10"></div>
+
+        {/* 🔷 BRAND */}
+        <div className="relative z-10 mb-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white text-indigo-700 flex items-center justify-center font-bold">
+            GC
+          </div>
+          <span className="text-lg font-semibold tracking-wide">
+            GiftConnect
+          </span>
         </div>
-      ) : null}
 
-      <button
-        className="bg-green-600 text-white px-4 py-2 rounded"
-        onClick={redeem}
-        disabled={
-          loading ||
-          !dealerId ||
-          status.includes("Redeemed")
-        }
-      >
-        {loading ? "Processing..." : "Redeem Voucher"}
-      </button>
+        {/* 🔥 HEADLINE */}
+        <h2 className="relative z-10 text-4xl font-extrabold mb-6 leading-tight max-w-lg">
+          Digital Voucher Flow
+          <span className="block text-indigo-400">
+            Simplified for OEM Ecosystem
+          </span>
+        </h2>
 
-      <p className="mt-4">{status}</p>
+        {/* 🔹 SUBTEXT */}
+        <p className="relative z-10 text-white/70 mb-12 max-w-md">
+          A structured flow connecting corporates, OEMs and dealers
+          with seamless voucher issuance and redemption tracking.
+        </p>
+
+        {/* 🔁 FLOWCHART */}
+        <div className="relative z-10 flex flex-col gap-6">
+
+          {/* STEP 1 */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center text-xl">
+              🏢
+            </div>
+            <span>Corporate places bulk order</span>
+          </div>
+
+          <div className="ml-6 h-6 border-l border-white/30"></div>
+
+          {/* STEP 2 */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center text-xl">
+              🏭
+            </div>
+            <span>OEM allocates vehicles</span>
+          </div>
+
+          <div className="ml-6 h-6 border-l border-white/30"></div>
+
+          {/* STEP 3 */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center text-xl">
+              🏪
+            </div>
+            <span>Dealer / Reseller mapped</span>
+          </div>
+
+          <div className="ml-6 h-6 border-l border-white/30"></div>
+
+          {/* STEP 4 */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center text-xl">
+              🎟
+            </div>
+            <span>Voucher issued digitally</span>
+          </div>
+
+          <div className="ml-6 h-6 border-l border-white/30"></div>
+
+          {/* STEP 5 */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-xl">
+              💰
+            </div>
+            <span>Redemption & settlement</span>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ================= RIGHT PANEL ================= */}
+      <div className="flex items-center justify-center bg-gray-50 px-4">
+
+        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+
+          <h2 className="text-xl font-bold text-center mb-4">
+            Voucher Redemption
+          </h2>
+
+          {loadingVoucher ? (
+            <p className="text-center">Loading...</p>
+          ) : voucher ? (
+            <div className="border rounded-xl p-4 mb-4">
+
+              <p className="text-sm text-gray-500 mb-2">
+                Voucher ID
+              </p>
+              <p className="font-semibold mb-3">{voucherId}</p>
+
+              <div className="flex justify-between text-sm mb-2">
+                <span>Value</span>
+                <span className="font-semibold">₹{voucher.value}</span>
+              </div>
+
+              <div className="flex justify-between text-sm mb-2">
+                <span>Status</span>
+                <span className="text-indigo-600 font-medium">
+                  {voucher.status}
+                </span>
+              </div>
+
+              <div className="flex justify-between text-sm">
+                <span>Expiry</span>
+                <span>
+                  {new Date(voucher.expiryDate).toLocaleDateString()}
+                </span>
+              </div>
+
+            </div>
+          ) : null}
+
+          <button
+            onClick={redeem}
+            disabled={loading || !dealerId}
+            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:scale-105 transition"
+          >
+            {loading ? "Processing..." : "Redeem Voucher"}
+          </button>
+
+          {status && (
+            <p className={`text-center mt-4 font-medium ${status === "SUCCESS" ? "text-green-600" : "text-red-500"
+              }`}>
+              {status === "SUCCESS"
+                ? "✅ Voucher Redeemed Successfully"
+                : status}
+            </p>
+          )}
+
+        </div>
+
+      </div>
+
     </div>
   )
 }
 
 export default function RedeemPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Suspense fallback={<div>Loading voucher...</div>}>
-        <RedeemContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <RedeemContent />
+    </Suspense>
   )
 }

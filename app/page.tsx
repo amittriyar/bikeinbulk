@@ -1,143 +1,172 @@
-'use client';
+'use client'
 
-import React from "react";
-import GCLogo from '@/components/GCLogo'
+import Link from 'next/link'
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen font-sans bg-gray-50">
+    <div className="bg-white overflow-hidden">
 
-      {/* TOP NAV */}
-      <header className="bg-gradient-to-r from-indigo-700 to-blue-700 text-white px-8 py-4 shadow-md">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
+      {/* ================= HERO ================= */}
+      <section className="relative pt-32 pb-28 px-6 text-center overflow-hidden">
 
-          {/* LEFT - LOGO */}
-          <GCLogo />
+        {/* 🔥 BACKGROUND GLOW */}
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-indigo-300/30 blur-3xl rounded-full"></div>
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-blue-300/30 blur-3xl rounded-full"></div>
 
-          {/* RIGHT - AUTH */}
-          <div className="flex items-center gap-6 text-sm font-medium">
-            <button
-              onClick={() => window.location.href = '/login'}
-              className="hover:text-gray-200 transition"
-            >
-              Login
-            </button>
+        <div className="relative max-w-5xl mx-auto">
 
-            <button
-              onClick={() => window.location.href = '/signup'}
-              className="bg-white text-indigo-700 px-4 py-1.5 rounded-full font-semibold hover:bg-gray-200 transition"
-            >
-              Sign Up
-            </button>
-          </div>
-
-        </div>
-      </header>
-
-      {/* HERO SECTION */}
-      <section className="relative bg-gradient-to-b from-indigo-50 to-white py-36 px-6 overflow-hidden">
-
-        {/* Soft transparent shapes */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-200 rounded-full opacity-30 blur-3xl"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-200 rounded-full opacity-20 blur-3xl"></div>
-
-        <div className="relative max-w-5xl mx-auto text-center z-10">
-
-          {/* Premium Badge */}
-          <div className="inline-block mb-6 px-4 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold">
-            India’s Unified Closed-Loop Voucher Platform
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-indigo-700 to-blue-600 bg-clip-text text-transparent">
-              Unified Digital Voucher
-            </span>
-            <br />
-            Platform for OEM Ecosystem
-          </h1>
-
-          <p className="text-lg md:text-xl text-gray-800 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Issue, manage and redeem digital value vouchers across OEMs,
-            dealers and corporates — purpose-built for India’s
-            two-wheeler and four-wheeler industry.
+          <p className="mb-4 text-sm bg-indigo-100 text-indigo-700 inline-block px-4 py-1 rounded-full">
+            India’s Unified Voucher Platform
           </p>
 
-          <div className="flex justify-center gap-6 flex-wrap">
+          <h1 className="text-5xl font-extrabold leading-tight mb-6 text-gray-900">
+            Powering Digital Voucher Flow
+            <br />
+            <span className="text-indigo-600">
+              Across OEM Ecosystem
+            </span>
+          </h1>
 
-            <button
-              onClick={() => window.location.href = '/sellersdashboard'}
-              className="px-10 py-4 rounded-full bg-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+          <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto">
+            Issue, track and redeem vehicle-linked vouchers across OEMs,
+            dealers and corporates — with complete transparency and control.
+          </p>
+
+          <div className="flex justify-center gap-4">
+            <Link
+              href="/signup"
+              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:scale-105 transition"
             >
-              For OEMs →
-            </button>
+              Get Started
+            </Link>
 
-            <button
-              onClick={() => window.location.href = '/buyers'}
-              className="px-10 py-4 rounded-full border-2 border-indigo-600 text-indigo-700 font-semibold hover:bg-indigo-50 hover:scale-105 transition-all duration-300"
+            <Link
+              href="#demo"
+              className="border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition"
             >
-              Corporate Gifting
-            </button>
-
+              Request Demo
+            </Link>
           </div>
 
         </div>
       </section>
 
-      {/* SEARCH + TABS */}
-      <section className="py-16 px-6 -mt-20 relative z-20">
-        <div className="max-w-5xl mx-auto">
 
-          <div className="mb-12 flex justify-center">
-            <input
-              type="text"
-              placeholder="Search OEMs, products, vouchers…"
-              className="w-full md:w-1/2 px-6 py-4 rounded-full border border-gray-200 shadow-lg backdrop-blur-md bg-white/80 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition"
-            />
-          </div>
+      {/* ================= FLOATING FLOW ================= */}
+      <section className="py-20 px-6 max-w-6xl mx-auto">
 
-          <div className="flex justify-center mb-10">
-            <div className="bg-white rounded-full shadow-lg flex overflow-hidden">
-              <button className="px-6 py-3 text-sm font-semibold bg-indigo-600 text-white">2W / 4W OEMs</button>
-              <button className="px-6 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">Dealers</button>
-              <button className="px-6 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-100">Corporates</button>
+        <h2 className="text-3xl font-bold text-center mb-16">
+          How It Works
+        </h2>
+
+        <div className="grid md:grid-cols-5 gap-8 text-center">
+
+          {[
+            ["🏢", "Corporate Order"],
+            ["🏭", "OEM Allocation"],
+            ["🏪", "Dealer Mapping"],
+            ["🎟", "Voucher Issued"],
+            ["💰", "Redemption"],
+          ].map(([icon, text], i) => (
+            <div
+              key={i}
+              className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition hover:-translate-y-2"
+            >
+              <div className="text-3xl mb-3">{icon}</div>
+              <p className="font-medium">{text}</p>
             </div>
-          </div>
+          ))}
 
-          <h2 className="text-4xl font-bold text-center mb-16">
-            Built for the Two-Wheeler and Four-Wheeler Ecosystem
-          </h2>
-
-          <div className="grid md:grid-cols-3 gap-10 mb-16">
-            {[
-              "Digital Gift Cards & Vouchers",
-              "Channel & Sales Incentives",
-              "Consumer Promotions",
-              "Closed-loop Voucher Technology",
-              "Corporate & B2B Gifting",
-              "Analytics & Settlement"
-            ].map((item, i) => (
-              <div key={i} className="bg-white shadow-lg hover:shadow-2xl rounded-3xl p-10 text-center hover:-translate-y-2 transition-all duration-300 border border-gray-100">
-                <h3 className="text-xl font-semibold">{item}</h3>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <button
-              className="px-8 py-4 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
-              onClick={() => window.location.href = '/buyersnext'}
-            >
-              Explore OEMs & Product Catalogue
-            </button>
-          </div>
         </div>
+
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-gray-900 text-gray-800 py-12 px-6 flex flex-col md:flex-row justify-between items-center">
-        <p>© 2026 GiftConnect</p>
-        <p>GST-compliant • Closed-loop vouchers • Secure</p>
+
+      {/* ================= DASHBOARD PREVIEW ================= */}
+      <section className="bg-gray-50 py-20 px-6 text-center">
+
+        <h2 className="text-3xl font-bold mb-6">
+          Complete Visibility & Control
+        </h2>
+
+        <p className="text-gray-600 mb-12">
+          Manage RFQs, orders, vouchers and redemption in one unified dashboard
+        </p>
+
+        <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-2xl p-6">
+
+          {/* FAKE DASHBOARD UI */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="bg-indigo-100 p-4 rounded">RFQs</div>
+            <div className="bg-blue-100 p-4 rounded">Orders</div>
+            <div className="bg-green-100 p-4 rounded">Vouchers</div>
+          </div>
+
+          <div className="bg-gray-100 h-40 rounded flex items-center justify-center text-gray-400">
+            Dashboard Preview
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================= FEATURES ================= */}
+      <section className="py-20 px-6 max-w-6xl mx-auto">
+
+        <h2 className="text-3xl font-bold text-center mb-12">
+          Why GiftConnect
+        </h2>
+
+        <div className="grid md:grid-cols-3 gap-6">
+
+          <Feature title="Smart RFQ System" desc="Competitive bidding across dealers." />
+          <Feature title="Voucher Lifecycle" desc="Track issuance to redemption." />
+          <Feature title="Secure Redemption" desc="QR-based validation system." />
+          <Feature title="Reseller Mapping" desc="Assign dealers efficiently." />
+          <Feature title="Bulk Operations" desc="Upload and manage at scale." />
+          <Feature title="Settlement Tracking" desc="End-to-end reconciliation." />
+
+        </div>
+
+      </section>
+
+
+      {/* ================= DEMO SECTION ================= */}
+      <section id="demo" className="bg-indigo-600 text-white py-20 px-6 text-center">
+
+        <h2 className="text-3xl font-bold mb-4">
+          See GiftConnect in Action
+        </h2>
+
+        <p className="mb-6">
+          Book a demo and experience how your entire voucher ecosystem transforms
+        </p>
+
+        <button className="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold">
+          Request Demo
+        </button>
+
+      </section>
+
+
+      {/* ================= FOOTER ================= */}
+      <footer className="text-center py-6 text-gray-500 text-sm">
+        © 2026 GiftConnect. All rights reserved.
       </footer>
 
     </div>
-  );
+  )
+}
+
+
+/* ================= COMPONENT ================= */
+
+function Feature({ title, desc }: any) {
+  return (
+    <div className="bg-white p-6 rounded-xl border hover:shadow-lg transition hover:-translate-y-1">
+      <h3 className="font-semibold text-lg mb-2">{title}</h3>
+      <p className="text-gray-600 text-sm">{desc}</p>
+    </div>
+  )
 }

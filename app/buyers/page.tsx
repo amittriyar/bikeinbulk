@@ -603,568 +603,638 @@ export default function BuyersDashboard() {
   };
 
 
-
-
   return (
     <>
       <TopNav />
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="mb-10 flex items-center gap-4">
-          <div>
-            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+      <div className="min-h-screen bg-gray-100 py-6">
+        <div className="px-6 space-y-6">
+          <div className="bg-gray-50 border rounded-2xl p-6 shadow-sm">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
               Buyers Dashboard
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-sm mt-2 text-gray-500">
               Manage RFQs, Orders and Corporate Gifting Activities
             </p>
           </div>
         </div>
         <div className="p-6">
+
           {/* KPI ROW */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow p-6">
-              <p className="text-sm text-gray-500">Active RFQs</p>
-              <p className="text-2xl font-bold">{buyerRFQs.length}</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+
+            <div className="rounded-2xl p-6 border shadow-sm bg-blue-50">
+              <p className="text-sm text-gray-600">Active RFQs</p>
+              <h2 className="text-xl font-bold mt-1">23</h2>
             </div>
-            <div className="bg-white rounded-xl shadow p-6">
-              <p className="text-sm text-gray-500">Live Orders</p>
-              <p className="text-2xl font-bold">{orders.length}</p>
+
+            <div className="rounded-2xl p-6 border shadow-sm bg-green-50">
+              <p className="text-sm text-gray-600">Live Orders</p>
+              <h2 className="text-xl font-bold mt-1">30</h2>
             </div>
-            <div className="bg-white rounded-xl shadow p-6">
-              <p className="text-sm text-gray-500">Vouchers Issued</p>
-              <p className="text-2xl font-bold">
-                {orderBeneficiaries.filter(b => b.voucherStatus === 'ISSUED').length}
-              </p>
+
+            <div className="rounded-2xl p-6 border shadow-sm bg-purple-50">
+              <p className="text-sm text-gray-600">Vouchers Issued</p>
+              <h2 className="text-xl font-bold mt-1">66</h2>
             </div>
-            <div className="bg-white rounded-xl shadow p-6">
-              <p className="text-sm text-gray-500">RFQ Draft Items</p>
-              <p className="text-2xl font-bold">{rfqItems.length}</p>
+
+            <div className="rounded-2xl p-6 border shadow-sm bg-yellow-50">
+              <p className="text-sm text-gray-600">RFQ Draft Items</p>
+              <h2 className="text-xl font-bold mt-1">0</h2>
             </div>
+
           </div>
           <Tabs defaultValue="marketplace" className="mb-6">
-            <TabsList className="border-b bg-transparent p-0 mb-6 flex gap-6">
-              <TabsTrigger value="marketplace">OEMs Marketplace</TabsTrigger>
-              <TabsTrigger value="create">Create RFQ (New)</TabsTrigger>
-              <TabsTrigger value="bids">Bids / RFQs</TabsTrigger>
-              <TabsTrigger value="orders">Orders</TabsTrigger>
-              <TabsTrigger value="beneficiaries">Beneficiaries</TabsTrigger>
-              <TabsTrigger value="vouchers">Vouchers</TabsTrigger>
+            <TabsList className="bg-gray-100 rounded-xl p-1 inline-flex gap-2">
+              <TabsTrigger
+                value="marketplace"
+                className="px-4 py-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+              >
+                OEMs Marketplace
+              </TabsTrigger>
+              <TabsTrigger value="create" className="px-4 py-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+              > Create RFQ (New)</TabsTrigger>
+              <TabsTrigger value="bids" className="px-4 py-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+              >Bids / RFQs</TabsTrigger>
+              <TabsTrigger value="orders" className="px-4 py-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+              >Orders</TabsTrigger>
+              <TabsTrigger value="beneficiaries" className="px-4 py-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+              >Beneficiaries</TabsTrigger>
+              <TabsTrigger value="vouchers" className="px-4 py-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+              >Vouchers</TabsTrigger>
             </TabsList>
+
+
             {/* ────────────────────────────────────────────── */}
             {/*                MARKETPLACE TAB                  */}
             {/* ────────────────────────────────────────────── */}
             <TabsContent value="marketplace">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>OEMs Catalogues</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-3 gap-4 mb-4">
-                    <select
-                      className="border p-2 rounded"
-                      value={filterCategory}
-                      onChange={e => setFilterCategory(e.target.value)}
-                    >
-                      <option value="All">All Categories</option>
-                      <option value="Scooter">Scooter</option>
-                      <option value="Motorcycle">Motorcycle</option>
-                    </select>
-                    <select
-                      className="border p-2 rounded"
-                      value={filterFuel}
-                      onChange={e => setFilterFuel(e.target.value)}
-                    >
-                      <option value="All">All Fuel Types</option>
-                      <option value="EV">EV</option>
-                      <option value="Petrol">ICE</option>
-                    </select>
-                    <select
-                      className="border p-2 rounded"
-                      value={filterOEM}
-                      onChange={e => setFilterOEM(e.target.value)}
-                    >
-                      <option value="All">All OEMs</option>
-                      {[...new Set(products.map(p => p.oem).filter(Boolean))]
-                        .map((oem, index) => (
-                          <option key={`${oem}-${index}`} value={oem}>
-                            {oem}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr>
-                        <th>OEM</th>
-                        <th>Model</th>
-                        <th>Category</th>
-                        <th>Fuel</th>
-                        <th>Indicative Price</th>
-                        <th>MOQ</th>
-                        <th>Compare</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="text-center p-4 text-gray-400">
-                            No catalogue items published yet
-                          </td>
-                        </tr>
-                      ) : (
-                        products.map(p => (
-                          <tr key={p.id} className="border-t">
-                            <td>{p.oemName}</td>
-                            <td>{p.modelName}</td>
-                            <td>{p.category || '—'}</td>
-                            <td>{p.fuelType || '—'}</td>
-                            <td>₹ {p.exShowroomPrice?.toLocaleString()}</td>
-                            <td>{p.moq}</td>
-                            <td className="text-center">
-                              <input
-                                type="checkbox"
-                                checked={compareModels.some(m => m.id === p.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    if (compareModels.length >= 3) {
-                                      alert("Maximum 3 models allowed for comparison");
-                                      return;
-                                    }
-                                    const updated = [...compareModels, p];
-                                    setCompareModels(updated);
 
-                                    if (updated.length === 3) {
-                                      setShowCompareModal(true);
-                                    }
-                                  } else {
-                                    setCompareModels(prev =>
-                                      prev.filter(m => m.id !== p.id)
-                                    );
-                                  }
-                                }}
-                              />
-                            </td>
+              {/* ✅ HEADER OUTSIDE CARD */}
+
+              <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  OEMs Catalogue
+                </h3>
+                <p className="text-sm text-gray-500 mt-4">
+                  Browse and select models for RFQ creation
+                </p>
+              </div>
+              <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
+                <CardContent>
+                  <div className="space-y-5">
+                    {/* ✅ FILTERS */}
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <select
+                        className="border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={filterCategory}
+                        onChange={e => setFilterCategory(e.target.value)}
+                      >
+                        <option value="All">All Categories</option>
+                        <option value="Scooter">Scooter</option>
+                        <option value="Motorcycle">Motorcycle</option>
+                      </select>
+
+                      <select
+                        className="border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={filterFuel}
+                        onChange={e => setFilterFuel(e.target.value)}
+                      >
+                        <option value="All">All Fuel Types</option>
+                        <option value="EV">EV</option>
+                        <option value="Petrol">ICE</option>
+                      </select>
+
+                      <select
+                        className="border border-gray-300 bg-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={filterOEM}
+                        onChange={e => setFilterOEM(e.target.value)}
+                      >
+                        <option value="All">All OEMs</option>
+                        {[...new Set(products.map(p => p.oem).filter(Boolean))]
+                          .map((oem, index) => (
+                            <option key={`${oem}-${index}`} value={oem}>
+                              {oem}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* ✅ TABLE */}
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+                      <table className="w-full text-sm">
+
+                        <thead className="bg-gray-100 text-gray-700">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">OEM</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Model</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Category</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Fuel</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Indicative Price</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">MOQ</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-center">Compare</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        </thead>
+
+                        <tbody>
+                          {products.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="text-center py-10 text-gray-400">
+                                No catalogue items published yet
+                              </td>
+                            </tr>
+                          ) : (
+                            products.map(p => (
+                              <tr key={p.id} className="border-t border-gray-200 hover:bg-gray-50 transition">
+                                <td className="px-4 py-3">{p.oemName}</td>
+                                <td className="px-4 py-3">{p.modelName}</td>
+                                <td className="px-4 py-3">{p.category || '—'}</td>
+                                <td className="px-4 py-3">{p.fuelType || '—'}</td>
+                                <td className="px-4 py-3">₹ {p.exShowroomPrice?.toLocaleString()}</td>
+                                <td className="px-4 py-3">{p.moq}</td>
+                                <td className="text-center">
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 accent-indigo-600 cursor-pointer"
+                                    checked={compareModels.some(m => m.id === p.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        if (compareModels.length >= 3) {
+                                          alert("Maximum 3 models allowed for comparison");
+                                          return;
+                                        }
+                                        const updated = [...compareModels, p];
+                                        setCompareModels(updated);
+
+                                        if (updated.length === 3) {
+                                          setShowCompareModal(true);
+                                        }
+                                      } else {
+                                        setCompareModels(prev =>
+                                          prev.filter(m => m.id !== p.id)
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+
+                      </table>
+                    </div>
+
+                  </div>
                 </CardContent>
+
               </Card>
+
             </TabsContent>
             {/* ────────────────────────────────────────────── */}
             {/*                 CREATE RFQ TAB                  */}
             {/* ────────────────────────────────────────────── */}
+
             <TabsContent value="create">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Create New RFQ</CardTitle>
-                </CardHeader>
+              {/* 🔥 HEADER */}
+              <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Create New RFQ
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Start a new RFQ using model-specific or budget-based flow.
+                </p>
+              </div>
+              <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
                 <CardContent>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Start a new RFQ using model-specific or budget-based flow.
-                  </p>
-                  <div className="border rounded-lg p-4">
-                    <div className="mb-6">
-                      <p className="font-medium mb-2">RFQ Mode</p>
-                      <div className="flex gap-6">
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={rfqMode === 'MODEL'}
-                            onChange={() => setRfqMode('MODEL')}
-                          />
-                          Model-specific RFQ
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="radio"
-                            checked={rfqMode === 'BUDGET'}
-                            onChange={() => setRfqMode('BUDGET')}
-                          />
-                          Open RFQ (Budget-based)
-                        </label>
-                      </div>
-                    </div>
-                    {rfqMode === 'MODEL' && (
-                      <div className="mb-6">
-                        <h4 className="font-medium mb-3">Select Model(s) from Marketplace</h4>
-                        <div className="border rounded-lg max-h-56 overflow-y-auto mb-6">
-                          <table className="w-full text-sm">
-                            <thead className="bg-gray-50">
-                              <tr>
-                                <th className="p-2">Select</th>
-                                <th className="p-2">OEM</th>
-                                <th className="p-2">Model</th>
-                                <th className="p-2">Category</th>
-                                <th className="p-2">Fuel</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {products.map((p, idx) => (
-                                <tr key={p.id || idx} className="border-t">
-                                  <td className="p-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={rfqItems.some(i => i.catalogueId === p.id)}
-                                      onChange={(e) => toggleRfqItem(p, e.target.checked)}
-                                    />
-                                  </td>
-                                  <td className="p-2">{p.oemName}</td>
-                                  <td className="p-2">{p.modelName}</td>
-                                  <td className="p-2">{p.category}</td>
-                                  <td className="p-2">{p.fuelType}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                  <div className="space-y-6">
+                    {/* 🔥 MAIN BOX */}
+                    <div className="bg-white border rounded-xl p-5 space-y-6">
+
+                      {/* RFQ MODE */}
+                      <div>
+                        <p className="font-medium mb-3">RFQ Mode</p>
+                        <div className="flex gap-6">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              className="accent-indigo-600"
+                              checked={rfqMode === 'MODEL'}
+                              onChange={() => setRfqMode('MODEL')}
+                            />
+                            Model-specific RFQ
+                          </label>
+
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              className="accent-indigo-600"
+                              checked={rfqMode === 'BUDGET'}
+                              onChange={() => setRfqMode('BUDGET')}
+                            />
+                            Open RFQ (Budget-based)
+                          </label>
                         </div>
-                        <h4 className="font-medium mb-4">Location-wise Quantity (Per Product)</h4>
-                        {rfqItems.map((item, itemIndex) => (
-                          <div key={item.catalogueId} className="border rounded-lg p-4 mb-4">
-                            <h5 className="font-semibold mb-3">
-                              {item.modelName}
-                            </h5>
-                            <table className="w-full text-sm mb-4">
-                              <thead>
-                                <tr>
-                                  <th>City</th>
-                                  <th>Quantity</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {item.locations.map((loc: any, locIndex: number) => (
-                                  <tr key={locIndex} className="border-t">
-                                    <td>
-                                      <input
-                                        className="border p-1 w-full"
-                                        placeholder="City"
-                                        value={loc.city}
-                                        onChange={e => {
-                                          const updated = [...rfqItems];
-                                          updated[itemIndex].locations[locIndex].city = e.target.value;
-                                          setRfqItems(updated);
-                                        }}
-                                      />
-                                    </td>
-                                    <td>
-                                      <input
-                                        className="border p-1 w-full"
-                                        placeholder="Qty"
-                                        type="number"
-                                        value={loc.qty}
-                                        onChange={e => {
-                                          const updated = [...rfqItems];
-                                          updated[itemIndex].locations[locIndex].qty = e.target.value;
-                                          setRfqItems(updated);
-                                        }}
-                                      />
-                                    </td>
+                      </div>
+
+                      {/* ================= MODEL MODE ================= */}
+                      {rfqMode === 'MODEL' && (
+                        <div className="space-y-6">
+
+                          {/* TABLE */}
+                          <div>
+                            <h4 className="font-medium mb-3">
+                              Select Model(s) from Marketplace
+                            </h4>
+
+                            <div className="overflow-x-auto rounded-xl border border-gray-200">
+                              <table className="w-full text-sm">
+
+                                <thead className="bg-gray-100 text-gray-700">
+                                  <tr>
+                                    <th className="px-4 py-3">Select</th>
+                                    <th className="px-4 py-3 text-left">OEM</th>
+                                    <th className="px-4 py-3 text-left">Model</th>
+                                    <th className="px-4 py-3 text-left">Category</th>
+                                    <th className="px-4 py-3 text-left">Fuel</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                const updated = [...rfqItems];
-                                updated[itemIndex].locations.push({ city: '', qty: '' });
-                                setRfqItems(updated);
-                              }}
-                            >
-                              + Add Location
-                            </Button>
+                                </thead>
+
+                                <tbody>
+                                  {products.map((p, idx) => (
+                                    <tr key={p.id || idx} className="border-t border-gray-200 hover:bg-gray-50">
+
+                                      <td className="px-4 py-3 text-center">
+                                        <input
+                                          type="checkbox"
+                                          className="w-4 h-4 accent-indigo-600"
+                                          checked={rfqItems.some(i => i.catalogueId === p.id)}
+                                          onChange={(e) => toggleRfqItem(p, e.target.checked)}
+                                        />
+                                      </td>
+
+                                      <td className="px-4 py-3">{p.oemName}</td>
+                                      <td className="px-4 py-3">{p.modelName}</td>
+                                      <td className="px-4 py-3">{p.category}</td>
+                                      <td className="px-4 py-3">{p.fuelType}</td>
+
+                                    </tr>
+                                  ))}
+                                </tbody>
+
+                              </table>
+                            </div>
                           </div>
-                        ))}
-                        <div className="flex items-center gap-4 mb-6">
+
+                          {/* LOCATION WISE */}
+                          <div>
+                            <h4 className="font-medium mb-4">
+                              Location-wise Quantity (Per Product)
+                            </h4>
+
+                            {rfqItems.map((item, itemIndex) => (
+                              <div key={item.catalogueId} className="bg-gray-50 border rounded-xl p-4 space-y-4">
+
+                                <h5 className="font-semibold">{item.modelName}</h5>
+
+                                <table className="w-full text-sm">
+                                  <thead className="text-gray-600">
+                                    <tr>
+                                      <th className="text-left py-2">City</th>
+                                      <th className="text-left py-2">Quantity</th>
+                                    </tr>
+                                  </thead>
+
+                                  <tbody>
+                                    {item.locations.map((loc: any, locIndex: number) => (
+                                      <tr key={locIndex} className="border-t">
+
+                                        <td className="py-2">
+                                          <input
+                                            className="border border-gray-300 rounded px-2 py-1 w-full"
+                                            placeholder="City"
+                                            value={loc.city}
+                                            onChange={e => {
+                                              const updated = [...rfqItems];
+                                              updated[itemIndex].locations[locIndex].city = e.target.value;
+                                              setRfqItems(updated);
+                                            }}
+                                          />
+                                        </td>
+
+                                        <td className="py-2">
+                                          <input
+                                            className="border border-gray-300 rounded px-2 py-1 w-full"
+                                            type="number"
+                                            placeholder="Qty"
+                                            value={loc.qty}
+                                            onChange={e => {
+                                              const updated = [...rfqItems];
+                                              updated[itemIndex].locations[locIndex].qty = e.target.value;
+                                              setRfqItems(updated);
+                                            }}
+                                          />
+                                        </td>
+
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    const updated = [...rfqItems];
+                                    updated[itemIndex].locations.push({ city: '', qty: '' });
+                                    setRfqItems(updated);
+                                  }}
+                                >
+                                  + Add Location
+                                </Button>
+
+                              </div>
+                            ))}
+
+                          </div>
+
+                        </div>
+                      )}
+
+                      {/* ================= BUDGET MODE ================= */}
+                      {rfqMode === 'BUDGET' && (
+                        <div className="bg-gray-50 border rounded-xl p-4 space-y-4">
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <select
+                              className="border border-gray-300 px-3 py-2 rounded-lg"
+                              value={budgetForm.fuelType}
+                              onChange={e => setBudgetForm({ ...budgetForm, fuelType: e.target.value })}
+                            >
+                              <option value="">Select Fuel Type</option>
+                              <option value="ICE">ICE</option>
+                              <option value="EV">EV</option>
+                            </select>
+
+                            <select
+                              className="border border-gray-300 px-3 py-2 rounded-lg"
+                              value={budgetForm.vehicleType}
+                              onChange={e => setBudgetForm({ ...budgetForm, vehicleType: e.target.value })}
+                            >
+                              <option value="">Select Vehicle Type</option>
+                              <option value="Motorcycle">Motorcycle</option>
+                              <option value="Scooter">Scooter</option>
+                            </select>
+                          </div>
+
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <input
+                              className="border border-gray-300 px-3 py-2 rounded-lg"
+                              placeholder="Min Budget (₹)"
+                              value={budgetForm.minBudget}
+                              onChange={e => setBudgetForm({ ...budgetForm, minBudget: e.target.value })}
+                            />
+                            <input
+                              className="border border-gray-300 px-3 py-2 rounded-lg"
+                              placeholder="Max Budget (₹)"
+                              value={budgetForm.maxBudget}
+                              onChange={e => setBudgetForm({ ...budgetForm, maxBudget: e.target.value })}
+                            />
+                          </div>
+
                           <Button
                             variant="outline"
-                            onClick={() => setLocationRows(prev => [...prev, { city: '', qty: '' }])}
+                            onClick={() =>
+                              setBudgetForm({
+                                ...budgetForm,
+                                locations: [...budgetForm.locations, { city: '', qty: '' }]
+                              })
+                            }
                           >
-                            + Add Row
+                            + Add Location
                           </Button>
-                          <span className="text-sm text-gray-500">or</span>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Upload via Excel</label>
-                            <input type="file" accept=".xlsx,.xls" />
-                            <p className="text-xs text-gray-500 mt-1">Columns: City, Quantity</p>
-                          </div>
+
+                          <p className="text-sm text-gray-600">
+                            Total Quantity: <strong>{totalBudgetQty}</strong>
+                          </p>
+
                         </div>
-                      </div>
-                    )}
-                    {rfqMode === 'BUDGET' && (
-                      <div className="border rounded-lg p-4 space-y-4 mb-6">
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <select
-                            className="border p-2 rounded"
-                            value={budgetForm.fuelType}
-                            onChange={e => setBudgetForm({ ...budgetForm, fuelType: e.target.value })}
-                          >
-                            <option value="">Select Fuel Type</option>
-                            <option value="ICE">ICE</option>
-                            <option value="EV">EV</option>
-                          </select>
-                          <select
-                            className="border p-2 rounded"
-                            value={budgetForm.vehicleType}
-                            onChange={e => setBudgetForm({ ...budgetForm, vehicleType: e.target.value })}
-                          >
-                            <option value="">Select Vehicle Type</option>
-                            <option value="Motorcycle">Motorcycle</option>
-                            <option value="Scooter">Scooter</option>
-                          </select>
-                        </div>
-                        {budgetForm.fuelType === 'ICE' && (
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <input
-                              className="border p-2 rounded"
-                              placeholder="Min Engine Capacity (CC)"
-                              value={budgetForm.minSpec}
-                              onChange={e => setBudgetForm({ ...budgetForm, minSpec: e.target.value })}
-                            />
-                            <input
-                              className="border p-2 rounded"
-                              placeholder="Max Engine Capacity (CC)"
-                              value={budgetForm.maxSpec}
-                              onChange={e => setBudgetForm({ ...budgetForm, maxSpec: e.target.value })}
-                            />
-                          </div>
-                        )}
-                        {budgetForm.fuelType === 'EV' && (
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <input
-                              className="border p-2 rounded"
-                              placeholder="Min Motor Power (kW)"
-                              value={budgetForm.minSpec}
-                              onChange={e => setBudgetForm({ ...budgetForm, minSpec: e.target.value })}
-                            />
-                            <input
-                              className="border p-2 rounded"
-                              placeholder="Max Motor Power (kW)"
-                              value={budgetForm.maxSpec}
-                              onChange={e => setBudgetForm({ ...budgetForm, maxSpec: e.target.value })}
-                            />
-                          </div>
-                        )}
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <input
-                            className="border p-2 rounded"
-                            placeholder="Min Budget (₹)"
-                            value={budgetForm.minBudget}
-                            onChange={e => setBudgetForm({ ...budgetForm, minBudget: e.target.value })}
-                          />
-                          <input
-                            className="border p-2 rounded"
-                            placeholder="Max Budget (₹)"
-                            value={budgetForm.maxBudget}
-                            onChange={e => setBudgetForm({ ...budgetForm, maxBudget: e.target.value })}
-                          />
-                        </div>
-                        <h4 className="font-medium mt-4 mb-2">Location-wise Quantity</h4>
-                        <table className="w-full text-sm mb-4">
-                          <thead>
-                            <tr>
-                              <th>City</th>
-                              <th>Quantity</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {budgetForm.locations.map((loc, idx) => (
-                              <tr key={idx} className="border-t">
-                                <td>
-                                  <input
-                                    className="border p-1 w-full"
-                                    placeholder="City"
-                                    value={loc.city}
-                                    onChange={e => {
-                                      const updated = [...budgetForm.locations];
-                                      updated[idx].city = e.target.value;
-                                      setBudgetForm({ ...budgetForm, locations: updated });
-                                    }}
-                                  />
-                                </td>
-                                <td>
-                                  <input
-                                    type="number"
-                                    className="border p-1 w-full"
-                                    placeholder="Qty"
-                                    value={loc.qty}
-                                    onChange={e => {
-                                      const updated = [...budgetForm.locations];
-                                      updated[idx].qty = e.target.value;
-                                      setBudgetForm({ ...budgetForm, locations: updated });
-                                    }}
-                                  />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                      )}
+
+                      {/* 🔥 ACTIONS */}
+                      <div className="flex justify-end gap-3">
+
                         <Button
-                          variant="outline"
-                          onClick={() =>
-                            setBudgetForm({
-                              ...budgetForm,
-                              locations: [...budgetForm.locations, { city: '', qty: '' }]
-                            })
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                          onClick={submitRFQ}
+                          disabled={
+                            submitting ||
+                            !rfqDraftActive ||
+                            (rfqMode === 'MODEL'
+                              ? rfqItems.length === 0
+                              : totalBudgetQty === 0)
                           }
                         >
-                          + Add Location
+                          {submitting ? "Submitting..." : "Submit RFQ"}
                         </Button>
-                        <p className="mt-2 text-sm text-gray-600">
-                          Total Quantity: <strong>{totalBudgetQty}</strong>
-                        </p>
+
+                        {!rfqDraftActive && (
+                          <Button
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => setRfqDraftActive(true)}
+                          >
+                            Create New RFQ
+                          </Button>
+                        )}
+
                       </div>
-                    )}
-                    <div className="flex justify-end">
-                      <Button
-                        className="bg-indigo-600 hover:bg-indigo-700"
-                        onClick={submitRFQ}
-                        disabled={
-                          submitting ||
-                          !rfqDraftActive ||
-                          (
-                            rfqMode === 'MODEL'
-                              ? rfqItems.length === 0
-                              : totalBudgetQty === 0
-                          )
-                        }
-                      >
-                        {submitting ? "Submitting..." : "Submit RFQ"}
-                      </Button>
-                      {/* 👇 POST-SUBMIT ACTION */}
-                      {!rfqDraftActive && (
-                        <Button
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => setRfqDraftActive(true)}
-                        >
-                          Create New RFQ
-                        </Button>
-                      )}
+
                     </div>
+
                   </div>
                 </CardContent>
+
               </Card>
+
             </TabsContent>
             {/* ────────────────────────────────────────────── */}
             {/*                   BIDS TAB                     */}
             {/* ────────────────────────────────────────────── */}
             <TabsContent value="bids">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Bids / RFQs Tracker</CardTitle>
-                </CardHeader>
+              {/* HEADER */}
+
+              <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Bids / RFQs Tracker
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Track RFQs, quotations and order actions
+                </p>
+              </div>
+
+              <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
+
+
+
+
                 <CardContent>
-                  <table className="w-full text-sm mb-6">
-                    <thead>
-                      <tr>
-                        <th>RFQ ID</th>
-                        <th>Type</th>
-                        <th>Scope</th>
-                        <th>Qty</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {buyerRFQs.length === 0 ? (
+
+                  {/* TABLE WRAPPER */}
+                  <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+
+                    <table className="w-full text-sm">
+
+                      {/* HEADER */}
+                      <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                          <td colSpan={6} className="text-center p-4 text-gray-400">
-                            No RFQs created yet
-                          </td>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">RFQ ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Type</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Scope</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Qty</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
                         </tr>
-                      ) : (
-                        buyerRFQs.map(r => (
-                          <tr key={r.rfqId} className="border-t">
-                            <td>{r.rfqId}</td>
-                            <td>{r.rfqType}</td>
-                            <td>
-                              {r.rfqType === 'MODEL'
-                                ? r.items?.map((i: any) => i.modelName).join(', ')
-                                : `${r.items?.[0]?.fuelType} ${r.items?.[0]?.vehicleType} 
-                                (${r.items?.[0]?.minSpec}-${r.items?.[0]?.maxSpec})`
-                              }
-                            </td>
-                            <td>
-                              {
-                                r.items?.reduce(
-                                  (sum: number, i: any) =>
-                                    sum +
-                                    (i.locations || []).reduce(
-                                      (s: number, l: any) => s + Number(l.qty || 0),
-                                      0
-                                    ),
-                                  0
-                                ) || 0
-                              }
-                            </td>
-                            <td>{r.status}</td>
-                            <td className="flex gap-2">
-                              <button
-                                className="bg-gray-600 text-white px-3 py-1 rounded text-xs"
-                                onClick={() => openBids(r)}
-                              >
-                                View
-                              </button>
-                              <button
-                                className="bg-green-600 text-white px-3 py-1 rounded text-xs"
-                                onClick={() => downloadQuotation(r.rfqId)}
-                              >
-                                Download
-                              </button>
-                              <button
-                                className="bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                                onClick={() => downloadProforma(r.rfqId)}
-                              >
-                                Proforma
-                              </button>
-                              <button
-                                className="bg-purple-600 text-white px-3 py-1 rounded text-xs"
-                                onClick={async () => {
-                                  try {
-                                    const res = await fetch(`/api/buyer/bid/list?rfqId=${r.rfqId}`)
-                                    const data = await res.json()
-                                    if (!data || data.length === 0) {
-                                      alert("No bids received yet")
-                                      return
-                                    }
-                                    // ✅ L1 selection
-                                    const l1Bid = data.reduce((min: any, current: any) =>
-                                      Number(current.totalValue) < Number(min.totalValue)
-                                        ? current
-                                        : min
-                                    )
-                                    // ✅ Create Order (PO)
-                                    const orderRes = await fetch("/api/order/create", {
-                                      method: "POST",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({
-                                        rfqId: r.rfqId,
-                                        buyerId: "BUYER_001"
-                                      })
-                                    })
-                                    if (!orderRes.ok) {
-                                      alert("Failed to create order")
-                                      return
-                                    }
-                                    alert(`Order placed with ${l1Bid.sellerName}`)
-                                    // 🔥 Optional: reload to update status
-                                    window.location.reload()
-                                  } catch (err) {
-                                    console.error("Order error:", err)
-                                    alert("Something went wrong")
-                                  }
-                                }}
-                              >
-                                Place Order
-                              </button>
+                      </thead>
+
+                      {/* BODY */}
+                      <tbody>
+                        {buyerRFQs.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="text-center p-6 text-gray-400">
+                              No RFQs created yet
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          buyerRFQs.map((r) => (
+                            <tr
+                              key={r.rfqId}
+                              className="border-t border-gray-200 hover:bg-gray-50 transition"
+                            >
+
+                              {/* RFQ ID */}
+                              <td className="px-4 py-3 font-medium text-indigo-600">
+                                {r.rfqId}
+                              </td>
+
+                              {/* TYPE */}
+                              <td className="px-4 py-3">
+                                {r.rfqType}
+                              </td>
+
+                              {/* SCOPE */}
+                              <td className="px-4 py-3">
+                                {r.rfqType === 'MODEL'
+                                  ? r.items?.map((i: any) => i.modelName).join(', ')
+                                  : `${r.items?.[0]?.fuelType} ${r.items?.[0]?.vehicleType} 
+                      (${r.items?.[0]?.minSpec}-${r.items?.[0]?.maxSpec})`
+                                }
+                              </td>
+
+                              {/* QTY */}
+                              <td className="px-4 py-3">
+                                {
+                                  r.items?.reduce(
+                                    (sum: number, i: any) =>
+                                      sum +
+                                      (i.locations || []).reduce(
+                                        (s: number, l: any) => s + Number(l.qty || 0),
+                                        0
+                                      ),
+                                    0
+                                  ) || 0
+                                }
+                              </td>
+
+                              {/* STATUS */}
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`px-2 py-1 text-xs rounded-full font-medium
+                        ${r.status === 'OPEN' ? 'bg-yellow-100 text-yellow-700' : ''}
+                        ${r.status === 'RESPONDED' ? 'bg-blue-100 text-blue-700' : ''}
+                        ${r.status === 'CLOSED' ? 'bg-green-100 text-green-700' : ''}
+                      `}
+                                >
+                                  {r.status}
+                                </span>
+                              </td>
+
+                              {/* ACTIONS */}
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-2">
+
+                                  <button
+                                    className="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700 transition"
+                                    onClick={() => openBids(r)}
+                                  >
+                                    View
+                                  </button>
+
+                                  <button
+                                    className="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition"
+                                    onClick={() => downloadQuotation(r.rfqId)}
+                                  >
+                                    Download
+                                  </button>
+
+                                  <button
+                                    className="bg-indigo-500 text-white px-3 py-1 rounded text-xs hover:bg-indigo-600 transition"
+                                    onClick={() => downloadProforma(r.rfqId)}
+                                  >
+                                    Proforma
+                                  </button>
+
+                                  <button
+                                    className="bg-purple-600 text-white px-3 py-1 rounded text-xs hover:bg-purple-700 transition"
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(`/api/buyer/bid/list?rfqId=${r.rfqId}`)
+                                        const data = await res.json()
+                                        if (!data || data.length === 0) {
+                                          alert("No bids received yet")
+                                          return
+                                        }
+
+                                        const l1Bid = data.reduce((min: any, current: any) =>
+                                          Number(current.totalValue) < Number(min.totalValue)
+                                            ? current
+                                            : min
+                                        )
+
+                                        const orderRes = await fetch("/api/order/create", {
+                                          method: "POST",
+                                          headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({
+                                            rfqId: r.rfqId,
+                                            buyerId: "BUYER_001"
+                                          })
+                                        })
+
+                                        if (!orderRes.ok) {
+                                          alert("Failed to create order")
+                                          return
+                                        }
+
+                                        alert(`Order placed with ${l1Bid.sellerName}`)
+                                        window.location.reload()
+
+                                      } catch (err) {
+                                        console.error("Order error:", err)
+                                        alert("Something went wrong")
+                                      }
+                                    }}
+                                  >
+                                    Place Order
+                                  </button>
+
+                                </div>
+                              </td>
+
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+
+                    </table>
+                  </div>
+
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1172,335 +1242,511 @@ export default function BuyersDashboard() {
             {/*                   ORDERS TAB                   */}
             {/* ────────────────────────────────────────────── */}
             <TabsContent value="orders">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Orders</CardTitle>
-                </CardHeader>
+
+              {/* HEADER (same as your Bids tab) */}
+              <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Orders
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Manage orders, payments and beneficiaries
+                </p>
+              </div>
+
+              <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
+
                 <CardContent>
+
                   {orders.length === 0 ? (
-                    <p className="text-gray-400 text-sm">No orders placed yet</p>
+                    <p className="text-gray-400 text-sm px-4 py-6">
+                      No orders placed yet
+                    </p>
                   ) : (
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr>
-                          <th>Order ID</th>
-                          <th>RFQ ID</th>
-                          <th>Seller</th>
-                          <th>Models</th>
-                          <th>Order Value</th>
-                          <th>Status</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders.map(o => (
-                          <tr key={o.orderId} className="border-t">
-                            <td>{o.orderId}</td>
-                            <td>{o.rfqId}</td>
-                            <td>{o.sellerName}</td>
-                            <td>{o.items?.map((i: any) => i.modelName).join(', ') || '—'}</td>
-                            <td>₹{o.orderValue}</td>
-                            <td className="text-green-600 font-medium">{o.status}</td>
-                            <td className="flex gap-2 flex-wrap">
-                              {/* DOWNLOAD PO */}
-                              <button
-                                className="px-3 py-1 bg-indigo-600 text-white rounded text-xs"
-                                onClick={() => downloadPO(o.orderId)}
-                              >
-                                Download PO
-                              </button>
-                              {/* UPLOAD BENEFICIARIES */}
-                              <button
-                                className="bg-purple-600 text-white px-3 py-1 rounded"
-                                onClick={() => {
-                                  console.log("Clicked order:", o); // ✅ correct variable
-                                  setSelectedOrder(o);              // ✅ correct
-                                  setShowBeneficiaryUpload(true);
-                                }}
-                              >
-                                Upload Beneficiaries
-                              </button>
-                              {/* PAYMENT FLOW */}
-                              {o.paymentStatus === "SUBMITTED" && (
-                                <span className="text-orange-600 text-xs font-medium">
-                                  Waiting for Seller Approval
-                                </span>
-                              )}
-                              {(!o.paymentStatus || o.paymentStatus === "PENDING") && (
-                                <button
-                                  className="bg-yellow-600 text-white px-2 py-1 rounded text-xs"
-                                  onClick={() => {
-                                    setPaymentModal(o)
-                                    setPaymentForm({
-                                      utr: "",
-                                      amount: o.orderValue || "",
-                                      date: new Date().toISOString().split("T")[0]
-                                    })
-                                  }}
-                                >
-                                  Submit Payment
-                                </button>
-                              )}
-                              {o.paymentStatus === "RECEIPT_ISSUED" && (
-                                <button
-                                  className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                                  onClick={() => downloadReceipt(o.orderId)}
-                                >
-                                  Receipt
-                                </button>
-                              )}
-                            </td>
+
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+
+                      <table className="w-full text-sm">
+
+                        {/* HEADER */}
+                        <thead className="bg-gray-100 text-gray-700">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Order ID</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">RFQ ID</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Seller</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Models</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Order Value</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+
+                        {/* BODY */}
+                        <tbody>
+                          {orders.map(o => (
+                            <tr
+                              key={o.orderId}
+                              className="border-t border-gray-200 hover:bg-gray-50 transition"
+                            >
+
+                              <td className="px-4 py-3 font-medium text-indigo-600">
+                                {o.orderId}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {o.rfqId}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {o.sellerName}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {o.items?.map((i: any) => i.modelName).join(', ') || '—'}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                ₹{o.orderValue}
+                              </td>
+
+                              {/* STATUS BADGE */}
+                              <td className="px-4 py-3">
+                                <span className="px-2 py-1 text-xs rounded-full font-medium bg-green-100 text-green-700">
+                                  {o.status}
+                                </span>
+                              </td>
+
+                              {/* ACTIONS */}
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-2">
+
+                                  {/* DOWNLOAD PO */}
+                                  <button
+                                    className="px-3 py-1 bg-indigo-600 text-white rounded-md text-xs hover:bg-indigo-700 transition"
+                                    onClick={() => downloadPO(o.orderId)}
+                                  >
+                                    Download PO
+                                  </button>
+
+                                  {/* UPLOAD BENEFICIARIES */}
+                                  <button
+                                    className="bg-purple-600 text-white px-3 py-1 rounded-md text-xs hover:bg-purple-700 transition"
+                                    onClick={() => {
+                                      console.log("Clicked order:", o);
+                                      setSelectedOrder(o);
+                                      setShowBeneficiaryUpload(true);
+                                    }}
+                                  >
+                                    Upload Beneficiaries
+                                  </button>
+
+                                  {/* PAYMENT FLOW */}
+                                  {o.paymentStatus === "SUBMITTED" && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-700 rounded">
+                                      Waiting for Seller Approval
+                                    </span>
+                                  )}
+
+                                  {(!o.paymentStatus || o.paymentStatus === "PENDING") && (
+                                    <button
+                                      className="bg-yellow-600 text-white px-3 py-1 rounded-md text-xs hover:bg-yellow-700 transition"
+                                      onClick={() => {
+                                        setPaymentModal(o)
+                                        setPaymentForm({
+                                          utr: "",
+                                          amount: o.orderValue || "",
+                                          date: new Date().toISOString().split("T")[0]
+                                        })
+                                      }}
+                                    >
+                                      Submit Payment
+                                    </button>
+                                  )}
+
+                                  {o.paymentStatus === "RECEIPT_ISSUED" && (
+                                    <button
+                                      className="bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition"
+                                      onClick={() => downloadReceipt(o.orderId)}
+                                    >
+                                      Receipt
+                                    </button>
+                                  )}
+
+                                </div>
+                              </td>
+
+                            </tr>
+                          ))}
+                        </tbody>
+
+                      </table>
+
+                    </div>
+
                   )}
+
                 </CardContent>
               </Card>
+
             </TabsContent>
             {/* ────────────────────────────────────────────── */}
             {/*                   BENEFICIARIES TAB            */}
             {/* ────────────────────────────────────────────── */}
             <TabsContent value="beneficiaries">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Beneficiaries</CardTitle>
-                </CardHeader>
+
+              {/* HEADER (same pattern as other tabs) */}
+              <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Beneficiaries
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Manage beneficiary allocation and voucher issuance
+                </p>
+              </div>
+
+              <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
+
                 <CardContent>
+
                   {/* 🔥 ACTION BAR */}
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
+
                     <p className="text-sm text-gray-600">
                       Total Beneficiaries: {orderBeneficiaries.length}
                     </p>
-                    <button
-                      className="bg-green-700 text-white px-4 py-2 rounded text-sm"
-                      onClick={async () => {
-                        const orderId = selectedOrder?.orderId
-                        if (!orderId) {
-                          alert("No order found")
-                          return
-                        }
-                        const res = await fetch("/api/voucher/generate-all", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ orderId })
-                        })
-                        if (!res.ok) {
-                          alert(await res.text())
-                          return
-                        }
-                        alert("All vouchers generated successfully")
-                        window.location.reload()
-                      }}
-                    >
-                      Generate All Vouchers
-                    </button>
-                  </div>
-                  <select
-                    className="border px-2 py-1 text-sm rounded"
-                    value={selectedOrder?.orderId || ""}
-                    onChange={(e) => {
-                      const order = orderBeneficiaries.find(
-                        b => b.orderId === e.target.value
-                      )
-                      setSelectedOrder(order || null)
-                    }}
-                  >
-                    <option value="">Select Order</option>
-                    {[...new Set(orderBeneficiaries.map(b => b.orderId))].map((id) => (
-                      <option key={id} value={id}>
-                        {id}
-                      </option>
-                    ))}
-                  </select>
-                  {/* TABLE */}
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr>
-                        <th>Order ID</th>
-                        <th>Beneficiary</th>
-                        <th>Mobile</th>
-                        <th>City</th>
-                        <th>Pincode</th>
-                        <th>Reseller Name</th>
-                        <th>Reseller Code</th>
-                        <th>Voucher Status</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orderBeneficiaries.length === 0 ? (
-                        <tr>
-                          <td colSpan={9} className="text-center text-gray-400 p-4">
-                            No beneficiaries mapped yet
-                          </td>
-                        </tr>
-                      ) : (
-                        orderBeneficiaries.map((b, i) => (
-                          <tr key={i} className="border-t">
-                            <td>{b.orderId}</td>
-                            <td>{b.beneficiary?.name}</td>
-                            <td>{b.beneficiary?.mobile}</td>
-                            <td>{b.beneficiary?.city}</td>
-                            <td>{b.beneficiary?.pincode}</td>
-                            <td>{b.reseller?.companyName || '—'}</td>
-                            <td>{b.reseller?.resellerCode || 'Not Available'}</td>
 
-                            <td className="font-medium text-yellow-600">
-                              {b.voucherStatus}
-                            </td>
-                            <td>
-                              {b.voucherStatus === 'ISSUED' ? (
-                                <span className="text-gray-500 text-xs">Issued</span>
-                              ) : b.mappedResellerId ? (
-                                <span className="text-yellow-600 text-xs">Ready</span>
-                              ) : (
-                                <span className="text-red-500 text-xs">Not Eligible</span>
-                              )}
+                    <div className="flex gap-3 items-center flex-wrap">
+
+                      {/* ORDER SELECT */}
+                      <select
+                        className="border border-gray-300 px-3 py-1.5 text-sm rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                        value={selectedOrder?.orderId || ""}
+                        onChange={(e) => {
+                          const order = orderBeneficiaries.find(
+                            b => b.orderId === e.target.value
+                          )
+                          setSelectedOrder(order || null)
+                        }}
+                      >
+                        <option value="">Select Order</option>
+                        {[...new Set(orderBeneficiaries.map(b => b.orderId))].map((id) => (
+                          <option key={id} value={id}>
+                            {id}
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* GENERATE BUTTON */}
+                      <button
+                        className="bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700 transition"
+                        onClick={async () => {
+                          const orderId = selectedOrder?.orderId
+                          if (!orderId) {
+                            alert("No order found")
+                            return
+                          }
+                          const res = await fetch("/api/voucher/generate-all", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ orderId })
+                          })
+                          if (!res.ok) {
+                            alert(await res.text())
+                            return
+                          }
+                          alert("All vouchers generated successfully")
+                          window.location.reload()
+                        }}
+                      >
+                        Generate All Vouchers
+                      </button>
+
+                    </div>
+                  </div>
+
+                  {/* TABLE */}
+                  <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+
+                    <table className="w-full text-sm">
+
+                      {/* HEADER */}
+                      <thead className="bg-gray-100 text-gray-700">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Order ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Beneficiary</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Mobile</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">City</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Pincode</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Reseller Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Reseller Code</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Voucher Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
+                        </tr>
+                      </thead>
+
+                      {/* BODY */}
+                      <tbody>
+                        {orderBeneficiaries.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} className="text-center text-gray-400 p-6">
+                              No beneficiaries mapped yet
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          orderBeneficiaries.map((b, i) => (
+                            <tr
+                              key={i}
+                              className="border-t border-gray-200 hover:bg-gray-50 transition"
+                            >
+
+                              <td className="px-4 py-3 text-indigo-600 font-medium">
+                                {b.orderId}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {b.beneficiary?.name}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {b.beneficiary?.mobile}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {b.beneficiary?.city}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {b.beneficiary?.pincode}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {b.reseller?.companyName || '—'}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {b.reseller?.resellerCode || 'Not Available'}
+                              </td>
+
+                              {/* STATUS BADGE */}
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`px-2 py-1 text-xs rounded-full font-medium
+                        ${b.voucherStatus === 'ISSUED' ? 'bg-green-100 text-green-700' : ''}
+                        ${b.voucherStatus === 'NO_RESELLER' ? 'bg-red-100 text-red-600' : ''}
+                        ${b.voucherStatus === 'MAPPED' ? 'bg-yellow-100 text-yellow-700' : ''}
+                      `}
+                                >
+                                  {b.voucherStatus}
+                                </span>
+                              </td>
+
+                              {/* ACTION */}
+                              <td className="px-4 py-3">
+                                {b.voucherStatus === 'ISSUED' ? (
+                                  <span className="text-gray-500 text-xs">Issued</span>
+                                ) : b.mappedResellerId ? (
+                                  <span className="text-yellow-600 text-xs font-medium">Ready</span>
+                                ) : (
+                                  <span className="text-red-500 text-xs font-medium">Not Eligible</span>
+                                )}
+                              </td>
+
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
                 </CardContent>
               </Card>
+
             </TabsContent>
             {/* ────────────────────────────────────────────── */}
             {/*                  VOUCHERS TAB                  */}
             {/* ────────────────────────────────────────────── */}
             <TabsContent value="vouchers">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Vouchers Tracker</CardTitle>
-                </CardHeader>
+
+              {/* HEADER (same as other tabs) */}
+              <div className="bg-white p-4 rounded-2xl border shadow-sm flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Vouchers Tracker
+                </h3>
+                <p className="text-sm text-gray-500">
+                  View, download and manage issued vouchers
+                </p>
+              </div>
+
+              <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
+
                 <CardContent>
-                  <table className="w-full text-sm">
-                    {/* ================= HEADER ================= */}
-                    <thead>
-                      <tr>
-                        <th>Voucher ID</th>
-                        <th>Order ID</th>
-                        <th>Beneficiary</th>
-                        <th>Mobile</th>
-                        <th>OEM</th>
-                        <th>Dealer</th>
-                        <th>Status</th>
-                        <th>Issued On</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    {/* ================= BODY ================= */}
-                    <tbody>
-                      {vouchers.length === 0 ? (
+
+                  {/* TABLE WRAPPER */}
+                  <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+
+                    <table className="w-full text-sm">
+
+                      {/* HEADER */}
+                      <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                          <td colSpan={9} className="text-center p-4 text-gray-400">
-                            No vouchers issued yet
-                          </td>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Voucher ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Order ID</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Beneficiary</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Mobile</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">OEM</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Dealer</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Issued On</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase">Action</th>
                         </tr>
-                      ) : (
-                        vouchers.map((v) => (
-                          <tr key={v.voucherId} className="border-t">
-                            {/* Voucher ID */}
-                            <td>
-                              <button
-                                className="text-indigo-600 underline"
-                                onClick={() => {
-                                  setSelectedVoucher(v)
-                                  setShowVoucherDetail(true)
-                                }}
-                              >
-                                {v.voucherId}
-                              </button>
-                            </td>
-                            {/* Order */}
-                            <td>{v.orderId}</td>
-                            {/* Beneficiary */}
-                            <td>{v.beneficiary?.name || "-"}</td>
-                            {/* Mobile */}
-                            <td>{v.beneficiary?.mobile || "-"}</td>
-                            {/* OEM */}
-                            <td>{v.reseller?.oemName || "—"}</td>
-                            {/* Dealer */}
-                            <td>{v.reseller?.companyName || "Not Assigned"}</td>
-                            {/* Status (single column ONLY) */}
-                            <td
-                              className={
-                                v.status === "ACTIVE"
-                                  ? "text-green-600 font-medium"
-                                  : v.status === "PENDING_RESELLER"
-                                    ? "text-yellow-600 font-medium"
-                                    : "text-gray-500"
-                              }
-                            >
-                              {v.status === "ACTIVE"
-                                ? "Issued"
-                                : v.status === "PENDING_RESELLER"
-                                  ? "Pending Dealer"
-                                  : v.status}
-                            </td>
-                            {/* Date */}
-                            <td>
-                              {new Date(v.createdAt).toLocaleDateString()}
-                            </td>
-                            {/* ================= ACTIONS ================= */}
-                            <td className="flex gap-2">
-                              {/* VIEW */}
-                              <button
-                                className="bg-gray-600 text-white px-2 py-1 rounded text-xs"
-                                onClick={() =>
-                                  window.open(
-                                    `/api/documents/voucher/pdf?voucherId=${v.voucherId}`,
-                                    "_blank"
-                                  )
-                                }
-                              >
-                                View
-                              </button>
-                              {/* DOWNLOAD */}
-                              <button
-                                className="bg-green-600 text-white px-2 py-1 rounded text-xs"
-                                onClick={async () => {
-                                  try {
-                                    const res = await fetch(
-                                      `/api/documents/voucher/pdf?voucherId=${v.voucherId}`
-                                    )
-                                    if (!res.ok) {
-                                      alert("Download failed")
-                                      return
-                                    }
-                                    const blob = await res.blob()
-                                    const url = window.URL.createObjectURL(blob)
-                                    const a = document.createElement("a")
-                                    a.href = url
-                                    a.download = `Voucher-${v.voucherId}.pdf`
-                                    a.click()
-                                    window.URL.revokeObjectURL(url)
-                                  } catch (err) {
-                                    console.error(err)
-                                    alert("Error downloading voucher")
-                                  }
-                                }}
-                              >
-                                Download
-                              </button>
-                              {/* SEND (placeholder) */}
-                              <button
-                                className="bg-blue-600 text-white px-2 py-1 rounded text-xs"
-                                onClick={() =>
-                                  alert(`Send voucher to ${v.beneficiary?.mobile}`)
-                                }
-                              >
-                                Send
-                              </button>
+                      </thead>
+
+                      {/* BODY */}
+                      <tbody>
+                        {vouchers.length === 0 ? (
+                          <tr>
+                            <td colSpan={9} className="text-center p-6 text-gray-400">
+                              No vouchers issued yet
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          vouchers.map((v) => (
+                            <tr
+                              key={v.voucherId}
+                              className="border-t border-gray-200 hover:bg-gray-50 transition"
+                            >
+
+                              {/* Voucher ID */}
+                              <td className="px-4 py-3 font-medium">
+                                <button
+                                  className="text-indigo-600 hover:underline"
+                                  onClick={() => {
+                                    setSelectedVoucher(v)
+                                    setShowVoucherDetail(true)
+                                  }}
+                                >
+                                  {v.voucherId}
+                                </button>
+                              </td>
+
+                              {/* Order */}
+                              <td className="px-4 py-3">
+                                {v.orderId}
+                              </td>
+
+                              {/* Beneficiary */}
+                              <td className="px-4 py-3">
+                                {v.beneficiary?.name || "-"}
+                              </td>
+
+                              {/* Mobile */}
+                              <td className="px-4 py-3">
+                                {v.beneficiary?.mobile || "-"}
+                              </td>
+
+                              {/* OEM */}
+                              <td className="px-4 py-3">
+                                {v.reseller?.oemName || "—"}
+                              </td>
+
+                              {/* Dealer */}
+                              <td className="px-4 py-3">
+                                {v.reseller?.companyName || "Not Assigned"}
+                              </td>
+
+                              {/* STATUS BADGE */}
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`px-2 py-1 text-xs rounded-full font-medium
+                        ${v.status === "ACTIVE" ? "bg-green-100 text-green-700" : ""}
+                        ${v.status === "PENDING_RESELLER" ? "bg-yellow-100 text-yellow-700" : ""}
+                        ${v.status !== "ACTIVE" && v.status !== "PENDING_RESELLER" ? "bg-gray-100 text-gray-600" : ""}
+                      `}
+                                >
+                                  {v.status === "ACTIVE"
+                                    ? "Issued"
+                                    : v.status === "PENDING_RESELLER"
+                                      ? "Pending Dealer"
+                                      : v.status}
+                                </span>
+                              </td>
+
+                              {/* DATE */}
+                              <td className="px-4 py-3">
+                                {new Date(v.createdAt).toLocaleDateString()}
+                              </td>
+
+                              {/* ACTIONS */}
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-2">
+
+                                  {/* VIEW */}
+                                  <button
+                                    className="bg-indigo-600 text-white px-3 py-1 rounded-md text-xs hover:bg-indigo-700 transition"
+                                    onClick={() =>
+                                      window.open(
+                                        `/api/documents/voucher/pdf?voucherId=${v.voucherId}`,
+                                        "_blank"
+                                      )
+                                    }
+                                  >
+                                    View
+                                  </button>
+
+                                  {/* DOWNLOAD */}
+                                  <button
+                                    className="bg-green-600 text-white px-3 py-1 rounded-md text-xs hover:bg-green-700 transition"
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(
+                                          `/api/documents/voucher/pdf?voucherId=${v.voucherId}`
+                                        )
+                                        if (!res.ok) {
+                                          alert("Download failed")
+                                          return
+                                        }
+                                        const blob = await res.blob()
+                                        const url = window.URL.createObjectURL(blob)
+                                        const a = document.createElement("a")
+                                        a.href = url
+                                        a.download = `Voucher-${v.voucherId}.pdf`
+                                        a.click()
+                                        window.URL.revokeObjectURL(url)
+                                      } catch (err) {
+                                        console.error(err)
+                                        alert("Error downloading voucher")
+                                      }
+                                    }}
+                                  >
+                                    Download
+                                  </button>
+
+                                  {/* SEND */}
+                                  <button
+                                    className="bg-blue-600 text-white px-3 py-1 rounded-md text-xs hover:bg-blue-700 transition"
+                                    onClick={() =>
+                                      alert(`Send voucher to ${v.beneficiary?.mobile}`)
+                                    }
+                                  >
+                                    Send
+                                  </button>
+
+                                </div>
+                              </td>
+
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
                 </CardContent>
               </Card>
+
             </TabsContent>
           </Tabs>
           {/* ────────────────────────────────────────────── */}
