@@ -7,7 +7,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Users, Ticket, IndianRupee, TrendingUp } from "lucide-react";
 import TopNav from '@/components/ui/TopNav'
 import * as XLSX from "xlsx";
+
 export default function BuyersDashboard() {
+  const getOEMCode = (oemName: string) => {
+    const map: any = {
+      "Hero MotoCorp": "HERO",
+      "Honda": "HON",
+      "TVS Motor": "TVS",
+      "Royal Enfield": "RE",
+      "Yamaha": "YAM",
+      "Suzuki": "SUZ"
+    };
+    return map[oemName] || oemName?.slice(0, 3).toUpperCase();
+  };
+  const [selectedOEM, setSelectedOEM] = useState<any | null>(null);
+  const [showOEMModal, setShowOEMModal] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [buyerRFQs, setBuyerRFQs] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -602,6 +616,19 @@ export default function BuyersDashboard() {
     alert(`Uploaded: ${data.success}, Failed: ${data.failed}`);
   };
 
+  const exportToExcel = (data: any[], fileName: string) => {
+    if (!data || data.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  };
+
 
   return (
     <>
@@ -745,7 +772,16 @@ export default function BuyersDashboard() {
                           ) : (
                             products.map(p => (
                               <tr key={p.id} className="border-t border-gray-200 hover:bg-gray-50 transition">
-                                <td className="px-4 py-3">{p.oemName}</td>
+                                <td className="px-4 py-3">
+                                  <button
+                                    className="text-indigo-600 hover:underline"
+                                    onClick={() => {
+                                      alert(`OEM Details for ${p.oemName}`);
+                                    }}
+                                  >
+                                    {p.oemName} ({getOEMCode(p.oemName)})
+                                  </button>
+                                </td>
                                 <td className="px-4 py-3">{p.modelName}</td>
                                 <td className="px-4 py-3">{p.category || '—'}</td>
                                 <td className="px-4 py-3">{p.fuelType || '—'}</td>
@@ -872,7 +908,17 @@ export default function BuyersDashboard() {
                                         />
                                       </td>
 
-                                      <td className="px-4 py-3">{p.oemName}</td>
+                                      <td className="px-4 py-3">
+                                        <button
+                                          className="text-indigo-600 hover:underline font-medium"
+                                          onClick={() => {
+                                            setSelectedOEM(p);
+                                            setShowOEMModal(true);
+                                          }}
+                                        >
+                                          {p.oemName} ({getOEMCode(p.oemName)})
+                                        </button>
+                                      </td>
                                       <td className="px-4 py-3">{p.modelName}</td>
                                       <td className="px-4 py-3">{p.category}</td>
                                       <td className="px-4 py-3">{p.fuelType}</td>
@@ -1068,6 +1114,22 @@ export default function BuyersDashboard() {
                 <p className="text-sm text-gray-500">
                   Track RFQs, quotations and order actions
                 </p>
+                <Button
+                  className="bg-green-600 text-white"
+                  onClick={() =>
+                    exportToExcel(
+                      buyerRFQs.map(r => ({
+                        RFQ_ID: r.rfqId,
+                        Type: r.rfqType,
+                        Status: r.status,
+                        Quantity: r.items?.length || 0
+                      })),
+                      "RFQs"
+                    )
+                  }
+                >
+                  Download Excel
+                </Button>
               </div>
 
               <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
@@ -1110,8 +1172,13 @@ export default function BuyersDashboard() {
                             >
 
                               {/* RFQ ID */}
-                              <td className="px-4 py-3 font-medium text-indigo-600">
-                                {r.rfqId}
+                              <td className="px-4 py-3">
+                                <button
+                                  className="text-indigo-600 hover:underline font-medium"
+                                  onClick={() => openBids(r)}
+                                >
+                                  {r.rfqId}
+                                </button>
                               </td>
 
                               {/* TYPE */}
@@ -1251,6 +1318,23 @@ export default function BuyersDashboard() {
                 <p className="text-sm text-gray-500">
                   Manage orders, payments and beneficiaries
                 </p>
+                <Button
+                  className="bg-green-600 text-white"
+                  onClick={() =>
+                    exportToExcel(
+                      orders.map(o => ({
+                        Order_ID: o.orderId,
+                        RFQ_ID: o.rfqId,
+                        Seller: o.sellerName,
+                        Value: o.orderValue,
+                        Status: o.status
+                      })),
+                      "Orders"
+                    )
+                  }
+                >
+                  Download Excel
+                </Button>
               </div>
 
               <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
@@ -1288,12 +1372,43 @@ export default function BuyersDashboard() {
                               className="border-t border-gray-200 hover:bg-gray-50 transition"
                             >
 
-                              <td className="px-4 py-3 font-medium text-indigo-600">
-                                {o.orderId}
+                              <td className="px-4 py-3">
+                                <button
+                                  className="text-indigo-600 hover:underline font-medium"
+                                  onClick={() => {
+                                    alert(`Order Details for ${o.orderId}`);
+                                    // 👉 Next step: open order modal
+                                  }}
+                                >
+                                  {o.orderId}
+                                </button>
                               </td>
 
                               <td className="px-4 py-3">
-                                {o.rfqId}
+                                <button
+                                  className="text-indigo-600 hover:underline"
+                                  onClick={async () => {
+                                    try {
+                                      // 🔥 fetch RFQ details
+                                      const res = await fetch(`/api/buyer/rfq/list?buyerId=BUYER_001`);
+                                      const data = await res.json();
+
+                                      const rfq = data.find((r: any) => r.rfqId === o.rfqId);
+
+                                      if (!rfq) {
+                                        alert("RFQ not found");
+                                        return;
+                                      }
+
+                                      openBids(rfq); // ✅ reuse existing modal
+                                    } catch (err) {
+                                      console.error(err);
+                                      alert("Failed to load RFQ");
+                                    }
+                                  }}
+                                >
+                                  {o.rfqId}
+                                </button>
                               </td>
 
                               <td className="px-4 py-3">
@@ -1401,6 +1516,25 @@ export default function BuyersDashboard() {
                 <p className="text-sm text-gray-500">
                   Manage beneficiary allocation and voucher issuance
                 </p>
+                <Button
+                  className="bg-green-600 text-white"
+                  onClick={() =>
+                    exportToExcel(
+                      orderBeneficiaries.map(b => ({
+                        Order_ID: b.orderId,
+                        Name: b.beneficiary?.name,
+                        Mobile: b.beneficiary?.mobile,
+                        City: b.beneficiary?.city,
+                        Pincode: b.beneficiary?.pincode,
+                        Reseller: b.reseller?.companyName,
+                        Status: b.voucherStatus
+                      })),
+                      "Beneficiaries"
+                    )
+                  }
+                >
+                  Download Excel
+                </Button>
               </div>
 
               <Card className="mb-6 bg-gray-50 border rounded-2xl shadow-sm">
@@ -1498,8 +1632,24 @@ export default function BuyersDashboard() {
                               className="border-t border-gray-200 hover:bg-gray-50 transition"
                             >
 
-                              <td className="px-4 py-3 text-indigo-600 font-medium">
-                                {b.orderId}
+                              <td className="px-4 py-3">
+                                <button
+                                  className="text-indigo-600 hover:underline font-medium"
+                                  onClick={() => {
+                                    const order = orders.find(o => o.orderId === b.orderId);
+
+                                    if (!order) {
+                                      alert("Order not found");
+                                      return;
+                                    }
+
+                                    // 🔥 reuse existing modal
+                                    setSelectedOrder(order);
+                                    setShowOrderSummary(true);
+                                  }}
+                                >
+                                  {b.orderId}
+                                </button>
                               </td>
 
                               <td className="px-4 py-3">
@@ -1632,7 +1782,23 @@ export default function BuyersDashboard() {
 
                               {/* Order */}
                               <td className="px-4 py-3">
-                                {v.orderId}
+                                <button
+                                  className="text-indigo-600 hover:underline font-medium"
+                                  onClick={() => {
+                                    const order = orders.find(o => o.orderId === v.orderId);
+
+                                    if (!order) {
+                                      alert("Order not found");
+                                      return;
+                                    }
+
+                                    // 🔥 reuse same flow everywhere
+                                    setSelectedOrder(order);
+                                    setShowOrderSummary(true);
+                                  }}
+                                >
+                                  {v.orderId}
+                                </button>
                               </td>
 
                               {/* Beneficiary */}
@@ -1752,6 +1918,48 @@ export default function BuyersDashboard() {
           {/* ────────────────────────────────────────────── */}
           {/*               MODALS (all of them)              */}
           {/* ────────────────────────────────────────────── */}
+
+          {showOEMModal && selectedOEM && (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl w-full max-w-xl p-6">
+
+                {/* HEADER */}
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">OEM Details</h3>
+                  <button
+                    className="text-gray-500 text-xl"
+                    onClick={() => setShowOEMModal(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* CONTENT */}
+                <div className="space-y-3 text-sm">
+
+                  <p><strong>OEM Name:</strong> {selectedOEM.oemName}</p>
+                  <p><strong>OEM Code:</strong> {getOEMCode(selectedOEM.oemName)}</p>
+                  <p><strong>Category:</strong> {selectedOEM.category || '—'}</p>
+                  <p><strong>Fuel Type:</strong> {selectedOEM.fuelType || '—'}</p>
+                  <p><strong>MOQ:</strong> {selectedOEM.moq}</p>
+                  <p><strong>Price Range:</strong> ₹ {selectedOEM.exShowroomPrice?.toLocaleString()}</p>
+
+                  {/* FUTURE READY */}
+                  <div className="pt-3 border-t">
+                    <button
+                      className="bg-indigo-600 text-white px-4 py-2 rounded text-sm"
+                      onClick={() => alert("Download brochure (to be integrated)")}
+                    >
+                      Download Brochure
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
           {showCompareModal && (
             <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
               <div className="bg-white w-full max-w-6xl rounded-xl p-6 max-h-[90vh] overflow-y-auto">
@@ -1831,19 +2039,82 @@ export default function BuyersDashboard() {
                     Close
                   </Button>
                 </div>
-                <div className="grid md:grid-cols-2 gap-4 mb-6">
-                  <p><strong>RFQ ID:</strong> RFQ-001</p>
-                  <p><strong>OEM:</strong> TVS</p>
-                  <p><strong>Model:</strong> iQube</p>
-                  <p><strong>Quantity:</strong> 280</p>
-                  <p><strong>Unit Price:</strong> ₹1.05L</p>
-                  <p><strong>Total Value:</strong> ₹2.94 Cr</p>
-                  <p><strong>Delivery:</strong> 30 days</p>
+                <div className="grid md:grid-cols-2 gap-4 mb-6 text-sm">
+
+                  <p><strong>Order ID:</strong> {selectedOrder?.orderId}</p>
+                  <p><strong>RFQ ID:</strong> {selectedOrder?.rfqId}</p>
+                  <p><strong>Seller:</strong> {selectedOrder?.sellerName}</p>
+
+                  <p><strong>Status:</strong>
+                    <span className="ml-2 px-2 py-1 text-xs rounded bg-green-100 text-green-700">
+                      {selectedOrder?.status}
+                    </span>
+                  </p>
+
+                  <p><strong>Total Value:</strong> ₹ {selectedOrder?.orderValue}</p>
+
+                  <p><strong>Models:</strong>
+                    {selectedOrder?.items?.map((i: any) => i.modelName).join(', ') || '—'}
+                  </p>
+
                 </div>
                 <div className="flex justify-end">
-                  <Button className="bg-indigo-600" onClick={() => setShowOrderSummary(false)}>
-                    Make Payment to OEM
-                  </Button>
+                  <div className="flex flex-wrap gap-3 justify-end">
+
+                    <Button
+                      className="bg-indigo-600"
+                      onClick={() => downloadPO(selectedOrder.orderId)}
+                    >
+                      Download PO
+                    </Button>
+
+                    <Button
+                      className="bg-green-600"
+                      onClick={() => downloadReceipt(selectedOrder.orderId)}
+                    >
+                      Receipt
+                    </Button>
+
+                    <Button
+                      className="bg-purple-600"
+                      onClick={() => {
+                        setShowOrderSummary(false);
+                        setShowBeneficiaryUpload(true);
+                      }}
+                    >
+                      Manage Beneficiaries
+                    </Button>
+                    <Button
+                      className="bg-blue-600 text-white"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `/api/documents/voucher/bundle?orderId=${selectedOrder.orderId}`
+                          );
+
+                          if (!res.ok) {
+                            alert("Download failed");
+                            return;
+                          }
+
+                          const blob = await res.blob();
+                          const url = window.URL.createObjectURL(blob);
+
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `Vouchers-${selectedOrder.orderId}.zip`;
+                          a.click();
+
+                          window.URL.revokeObjectURL(url);
+                        } catch (err) {
+                          console.error(err);
+                          alert("Error downloading bundle");
+                        }
+                      }}
+                    >
+                      Download All Vouchers
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

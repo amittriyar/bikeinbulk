@@ -6,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import * as XLSX from 'xlsx';
+import { exportToExcel } from '@/lib/exportUtils'
 import TopNav from '@/components/ui/TopNav';
 export const runtime = 'nodejs';
 
@@ -53,6 +55,15 @@ const VOUCHERS = [
 /* ================= PAGE ================= */
 
 export default function SellersDashboard() {
+
+
+  const [showOrderSummary, setShowOrderSummary] = useState(false);
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  useEffect(() => {
+    fetch(`/api/voucher/list?sellerId=SELLER_001`)
+      .then(res => res.json())
+      .then(data => setVouchers(data));
+  }, []);
   const [redemptions, setRedemptions] = useState<any[]>([])
   useEffect(() => {
     fetch('/api/redemptions')
@@ -161,6 +172,15 @@ export default function SellersDashboard() {
       alert("Error generating proforma");
     }
   };
+
+  const [sellerVouchers, setSellerVouchers] = useState([]);
+
+  useEffect(() => {
+    fetch(`/api/voucher/list?sellerId=SELLER_001`)
+      .then(res => res.json())
+      .then(setSellerVouchers);
+  }, []);
+
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const USER_ROLE = 'seller';
@@ -213,6 +233,8 @@ export default function SellersDashboard() {
         .then(setOrderBeneficiaries);
     }
   }, [tab]);
+
+  const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
   const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [discontinuingId, setDiscontinuingId] = useState<string | null>(null);
   const productFileRef = useRef<HTMLInputElement>(null);
@@ -534,6 +556,14 @@ export default function SellersDashboard() {
       });
     });
   }
+  const vouchersByOrder = Object.values(
+    sellerVouchers.reduce((acc: any, v: any) => {
+      if (!acc[v.orderId]) acc[v.orderId] = [];
+      acc[v.orderId].push(v);
+      return acc;
+    }, {})
+  );
+
   /* ================= RENDER ================= */
   return (
     <>
@@ -767,20 +797,112 @@ export default function SellersDashboard() {
         {/* 🔥 VIEW ORDER MODAL */}
         {activeModal === 'viewOrder' && selectedOrder && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white w-[700px] max-h-[85vh] overflow-auto p-6 rounded-xl shadow-xl">
-              <h2 className="text-xl font-bold mb-4">Order Details</h2>
-              <p><b>Order ID:</b> {selectedOrder.orderId}</p>
-              <p><b>Buyer:</b> {selectedOrder.buyerName || selectedOrder.buyerId}</p>
-              <p><b>Status:</b> {selectedOrder.status}</p>
-              <p><b>RFQ ID:</b> {selectedOrder.rfqId}</p>
-              <hr className="my-3" />
+            <div className="bg-white w-[750px] max-h-[90vh] overflow-auto p-6 rounded-xl shadow-xl">
+
+              {/* HEADER */}
+              <div className="flex justify-between items-center mb-4">
+
+                <h2 className="text-xl font-bold">
+                  Order Control Center
+                </h2>
+
+                <button
+                  className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                  onClick={() => setActiveModal(null)}
+                >
+                  ✕
+                </button>
+
+              </div>
+              {/* ================= ORDER INFO ================= */}
+              <div className="grid md:grid-cols-2 gap-4 text-sm mb-4">
+                <p><b>Order ID:</b> {selectedOrder.orderId}</p>
+                <p><b>Buyer:</b> {selectedOrder.buyerName || selectedOrder.buyerId}</p>
+                <p><b>Status:</b> {selectedOrder.status}</p>
+                <p><b>RFQ ID:</b> {selectedOrder.rfqId}</p>
+              </div>
+              {/* ================= INTELLIGENCE GRID ================= */}
+              <div className="grid md:grid-cols-3 gap-4 mb-6 items-stretch">
+
+                {/* ================= BENEFICIARY ================= */}
+                {(() => {
+                  const beneficiaries = orderBeneficiaries.filter(
+                    (b: any) => b.orderId === selectedOrder.orderId
+                  );
+
+                  return (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">📊 Beneficiary</h3>
+
+                      <div className="text-sm space-y-1">
+                        <p><b>Total:</b> {beneficiaries.length}</p>
+                        <p>
+                          <b>Assigned:</b>{" "}
+                          {beneficiaries.filter(b => b.voucherStatus === "ISSUED").length}
+                        </p>
+                        <p>
+                          <b>Pending:</b>{" "}
+                          {beneficiaries.filter(b => b.voucherStatus !== "ISSUED").length}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ================= VOUCHERS ================= */}
+                {(() => {
+                  const orderVouchers = vouchers.filter(
+                    (v: any) => v.orderId === selectedOrder.orderId
+                  );
+
+                  const redeemed = orderVouchers.filter(
+                    (v: any) =>
+                      v.status === "REDEEMED" || v.status === "Redeemed"
+                  ).length;
+
+                  const total = orderVouchers.length;
+
+                  return (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">🎟 Vouchers</h3>
+
+                      <div className="text-sm space-y-1">
+                        <p><b>Total:</b> {total}</p>
+                        <p><b>Redeemed:</b> {redeemed}</p>
+                        <p><b>Active:</b> {total - redeemed}</p>
+                        <p>
+                          <b>Redemption %:</b>{" "}
+                          {total > 0 ? Math.round((redeemed / total) * 100) : 0}%
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ================= FINANCIAL ================= */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">💰 Financial</h3>
+
+                  <div className="text-sm space-y-1">
+                    <p><b>Order Value:</b> ₹{selectedOrder.orderValue || 0}</p>
+                    <p><b>Paid:</b> ₹{selectedOrder.amountPaid || 0}</p>
+                    <p>
+                      <b>Status:</b>{" "}
+                      {selectedOrder.paymentStatus || "Pending"}
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+              {/* ================= ITEMS (UNCHANGED) ================= */}
               <h3 className="font-semibold mb-2">Items</h3>
+
               {(selectedOrder.items || []).map((i: any, idx: number) => (
                 <div key={idx} className="border p-3 rounded mb-3">
                   <p><b>Model:</b> {i.modelName}</p>
                   <p><b>Total Qty:</b> {i.requestedQty}</p>
                   <p><b>Unit Price:</b> ₹{i.unitPrice}</p>
-                  {/* 🔥 CITY-WISE BREAKDOWN */}
+
                   <div className="mt-2">
                     <p className="font-medium text-sm">City-wise Distribution:</p>
                     <ul className="ml-4 list-disc text-sm text-gray-600">
@@ -793,22 +915,65 @@ export default function SellersDashboard() {
                   </div>
                 </div>
               ))}
-              <div className="flex justify-between mt-4">
-                {/* DOWNLOAD BUTTON */}
-                <button
-                  className="px-4 py-2 bg-indigo-600 text-white rounded"
-                  onClick={() => downloadOrderPDF(selectedOrder)}
-                >
-                  PDF
-                </button>
-                {/* CLOSE */}
-                <button
-                  className="px-4 py-2 bg-gray-600 text-white rounded"
-                  onClick={() => setActiveModal(null)}
-                >
-                  Close
-                </button>
+
+              {/* ================= ACTIONS (ENHANCED) ================= */}
+              <div className="flex flex-wrap justify-between gap-3 mt-6">
+
+                <div className="flex gap-2">
+
+                  <button
+                    className="px-4 py-2 bg-indigo-600 text-white rounded"
+                    onClick={() => downloadOrderPDF(selectedOrder)}
+                  >
+                    Download PO
+                  </button>
+
+                  <button
+                    className="px-4 py-2 bg-gray-800 text-white rounded"
+                    onClick={() => {
+                      setTab("beneficiaries");
+                      setActiveModal(null);
+                    }}
+                  >
+                    Manage Beneficiaries
+                  </button>
+
+                </div>
+
+                <div className="flex gap-2">
+
+                  <button
+                    className="px-4 py-2 bg-yellow-600 text-white rounded"
+                    onClick={() => alert("Trigger reminder flow")}
+                  >
+                    Send Reminder
+                  </button>
+
+                  <button
+                    className="px-4 py-2 bg-green-600 text-white rounded"
+                    onClick={async () => {
+                      const res = await fetch(
+                        `/api/documents/voucher/bundle?orderId=${selectedOrder.orderId}`
+                      );
+
+                      const blob = await res.blob();
+                      const url = window.URL.createObjectURL(blob);
+
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `Vouchers-${selectedOrder.orderId}.zip`;
+                      a.click();
+
+                      window.URL.revokeObjectURL(url);
+                    }}
+                  >
+                    Download Vouchers
+                  </button>
+
+
+                </div>
               </div>
+
             </div>
           </div>
         )}
@@ -944,16 +1109,17 @@ export default function SellersDashboard() {
                   <h3 className="font-semibold text-lg">Published Catalogue</h3>
 
                   <button
-                    onClick={downloadCatalogue}
-                    className="text-sm bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
+                    onClick={() => exportToExcel(filteredPublishedProducts, "published_catalogue")}
+                    className="text-sm bg-indigo-600 text-white px-3 py-1 rounded"
                   >
-                    Download CSV
+                    Download Published Catalogue
                   </button>
                 </div>
 
                 <table className="w-full text-sm border-separate border-spacing-y-2">
                   <thead>
                     <tr className="text-gray-500 text-xs">
+                      <th className="text-left p-2">Catalogue ID</th>
                       <th className="text-left p-2">Model</th>
                       <th className="p-2">Category</th>
                       <th className="p-2">Engine</th>
@@ -977,6 +1143,12 @@ export default function SellersDashboard() {
                           key={p.id || i}
                           className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
                         >
+                          <td className="p-2 font-medium">
+                            <span className="text-indigo-600 hover:underline cursor-pointer">
+                              {p.id || `CAT-${i + 1}`}
+                            </span>
+                          </td>
+
                           <td className="p-2 font-medium">
                             {p.model || p.modelName}
                           </td>
@@ -1220,6 +1392,13 @@ export default function SellersDashboard() {
               <span className="text-sm text-gray-500">
                 {sellerRFQs.length} RFQs
               </span>
+              <button
+                onClick={() => exportToExcel(sellerRFQs, "rfqs_received")}
+                className="text-sm bg-indigo-600 text-white px-3 py-1 rounded"
+              >
+                Download RFQs
+              </button>
+
             </div>
 
             {/* ================= TABLE ================= */}
@@ -1281,7 +1460,17 @@ export default function SellersDashboard() {
                           key={r.rfqId}
                           className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
                         >
-                          <td className="p-2 font-medium">{r.rfqId}</td>
+                          <td className="p-2 font-medium">
+                            <span
+                              className="text-indigo-600 hover:underline cursor-pointer"
+                              onClick={() => {
+                                setSelectedRfq(r)
+                                setActiveModal("viewRFQ")
+                              }}
+                            >
+                              {r.rfqId}
+                            </span>
+                          </td>
 
                           <td className="p-2">{r.buyerName || 'Corporate'}</td>
 
@@ -1383,6 +1572,13 @@ export default function SellersDashboard() {
               <span className="text-sm text-gray-500">
                 {sellerOrders.length} Orders
               </span>
+              <button
+                onClick={() => exportToExcel(sellerOrders, "orders")}
+                className="text-sm bg-indigo-600 text-white px-3 py-1 rounded"
+              >
+                Download Orders
+              </button>
+
             </div>
 
             {/* ================= TABLE ================= */}
@@ -1415,7 +1611,17 @@ export default function SellersDashboard() {
                         key={o.orderId}
                         className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
                       >
-                        <td className="p-2 font-medium">{o.orderId}</td>
+                        <td className="p-2 font-medium">
+                          <span
+                            className="text-indigo-600 hover:underline cursor-pointer"
+                            onClick={() => {
+                              setSelectedOrder(o)
+                              setActiveModal("viewOrder")
+                            }}
+                          >
+                            {o.orderId}
+                          </span>
+                        </td>
 
                         <td className="p-2">
                           {o.buyerName || o.buyerId}
@@ -1546,6 +1752,24 @@ export default function SellersDashboard() {
               <span className="text-sm text-gray-500">
                 {orderBeneficiaries.length} Records
               </span>
+              <button
+                onClick={() => {
+                  const flat = orderBeneficiaries.map((b: any, i: number) => ({
+                    beneficiaryId: `BEN-${i + 1}`,
+                    orderId: b.orderId,
+                    name: b.beneficiary?.name,
+                    mobile: b.beneficiary?.mobile,
+                    city: b.beneficiary?.city,
+                    pincode: b.beneficiary?.pincode,
+                    status: b.voucherStatus
+                  }))
+
+                  exportToExcel(flat, "beneficiaries")
+                }}
+                className="text-sm bg-indigo-600 text-white px-3 py-1 rounded"
+              >
+                Download Beneficiaries
+              </button>
             </div>
 
             {/* ================= ALLOCATION SUMMARY ================= */}
@@ -1593,6 +1817,7 @@ export default function SellersDashboard() {
 
                 <thead>
                   <tr className="text-gray-500 text-xs">
+                    <th className="text-left p-2">Beneficiary ID</th>
                     <th className="text-left p-2">Order ID</th>
                     <th className="p-2">Beneficiary</th>
                     <th className="p-2">Mobile</th>
@@ -1615,24 +1840,22 @@ export default function SellersDashboard() {
                         key={i}
                         className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
                       >
-                        <td className="p-2 font-medium">{b.orderId}</td>
-
+                        <td className="p-2 font-medium">
+                          {`BEN-${i + 1}`}
+                        </td>
+                        <td className="p-2">{b.orderId}</td>
                         <td className="p-2">
                           {b.beneficiary?.name}
                         </td>
-
                         <td className="p-2">
                           {b.beneficiary?.mobile}
                         </td>
-
                         <td className="p-2 text-gray-600">
                           {b.beneficiary?.city}
                         </td>
-
                         <td className="p-2">
                           {b.beneficiary?.pincode}
                         </td>
-
                         {/* STATUS BADGE */}
                         <td className="p-2">
                           <span
@@ -1649,45 +1872,25 @@ export default function SellersDashboard() {
                             {b.voucherStatus}
                           </span>
                         </td>
-
                       </tr>
                     ))
                   )}
                 </tbody>
-
               </table>
             </div>
-
           </div>
         )}
-
-
-
         {/* ================= REDEMPTIONS ================= */}
         {tab === 'redemptions' && (
           <div className="space-y-6">
-
-            {/* ================= REDEMPTIONS ================= */}
             <div className="bg-white p-5 rounded-2xl border shadow-sm">
-
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-lg">Redemptions</h3>
+
                 <span className="text-sm text-gray-500">
                   {redemptions.length} Records
                 </span>
               </div>
-
               <table className="w-full text-sm border-separate border-spacing-y-2">
-
-                <thead>
-                  <tr className="text-gray-500 text-xs">
-                    <th className="text-left p-2">Voucher ID</th>
-                    <th className="p-2">Dealer</th>
-                    <th className="p-2">Amount</th>
-                    <th className="p-2">Date</th>
-                  </tr>
-                </thead>
-
                 <tbody>
                   {redemptions.length === 0 ? (
                     <tr>
@@ -1697,21 +1900,11 @@ export default function SellersDashboard() {
                     </tr>
                   ) : (
                     redemptions.map(r => (
-                      <tr
-                        key={r.id}
-                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
-                      >
+                      <tr key={r.id} className="bg-gray-50 hover:bg-gray-100 rounded-lg">
                         <td className="p-2 font-medium">{r.id}</td>
-
                         <td className="p-2">{r.dealer}</td>
-
-                        <td className="p-2 font-semibold text-green-600">
-                          ₹{r.amount}
-                        </td>
-
-                        <td className="p-2 text-gray-600">
-                          {r.date}
-                        </td>
+                        <td className="p-2 font-semibold text-green-600">₹{r.amount}</td>
+                        <td className="p-2 text-gray-600">{r.date}</td>
                       </tr>
                     ))
                   )}
@@ -1722,12 +1915,13 @@ export default function SellersDashboard() {
 
 
             {/* ================= ISSUED VOUCHERS ================= */}
+            {/* ================= ISSUED VOUCHERS ================= */}
             <div className="bg-white p-5 rounded-2xl border shadow-sm">
 
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-lg">Issued Vouchers</h3>
                 <span className="text-sm text-gray-500">
-                  {VOUCHERS.length} Vouchers
+                  {vouchers.length} Vouchers
                 </span>
               </div>
 
@@ -1737,6 +1931,7 @@ export default function SellersDashboard() {
                   <tr className="text-gray-500 text-xs">
                     <th className="text-left p-2">Voucher Code</th>
                     <th className="p-2">Order ID</th>
+                    <th className="p-2">Corporate</th>
                     <th className="p-2">Beneficiary</th>
                     <th className="p-2">Value</th>
                     <th className="p-2">Status</th>
@@ -1745,53 +1940,179 @@ export default function SellersDashboard() {
                 </thead>
 
                 <tbody>
-                  {VOUCHERS.length === 0 ? (
+                  {vouchers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center text-gray-400 p-6">
+                      <td colSpan={7} className="text-center text-gray-400 p-6">
                         No vouchers issued
                       </td>
                     </tr>
                   ) : (
-                    VOUCHERS.map(v => (
+                    vouchers.map((v: any) => (
                       <tr
-                        key={v.code}
-                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg shadow-sm"
+                        key={v.voucherId}
+                        className="bg-gray-50 hover:bg-gray-100 transition rounded-lg"
                       >
-                        <td className="p-2 font-medium">{v.code}</td>
+                        {/* Voucher Code */}
+                        <td className="p-2">
+                          <button
+                            className="text-indigo-600 hover:underline font-medium"
+                            onClick={() => {
+                              setSelectedVoucher(v);
+                              setShowVoucherModal(true);
+                            }}
+                          >
+                            {v.voucherId}
+                          </button>
+                        </td>
 
-                        <td className="p-2">{v.orderId}</td>
+                        {/* Clickable Order ID */}
+                        <td className="p-2">
+                          <button
+                            className="text-indigo-600 hover:underline"
+                            onClick={() => {
+                              setSelectedOrder(v.orderId);
+                              setShowOrderSummary(true);
+                            }}
+                          >
+                            {v.orderId}
+                          </button>
+                        </td>
 
-                        <td className="p-2">{v.beneficiary}</td>
+                        {/* Corporate */}
+                        <td className="p-2">Corporate</td>
 
+                        {/* Beneficiary */}
+                        <td className="p-2">
+                          {v.beneficiary?.name || "-"}
+                        </td>
+
+                        {/* Value */}
                         <td className="p-2 font-semibold">
                           ₹{v.value}
                         </td>
 
-                        {/* STATUS BADGE */}
+                        {/* Status */}
                         <td className="p-2">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${v.status === 'Redeemed'
+                  ${v.status === 'REDEEMED'
                                 ? 'bg-green-100 text-green-700'
-                                : v.status === 'Issued'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : 'bg-gray-200 text-gray-600'
+                                : 'bg-blue-100 text-blue-700'
                               }`}
                           >
                             {v.status}
                           </span>
                         </td>
 
+                        {/* Valid Till */}
                         <td className="p-2 text-gray-600">
-                          {v.validTill}
+                          {v.validTill
+                            ? new Date(v.validTill).toLocaleDateString()
+                            : "-"}
                         </td>
+
                       </tr>
                     ))
                   )}
                 </tbody>
 
               </table>
+
             </div>
+
+
+            {/* ================= ORDER MODAL ================= */}
+            {showOrderSummary && (
+              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-xl w-full max-w-3xl">
+
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-lg">Order Summary</h3>
+
+                    <button
+                      className="border px-3 py-1 rounded"
+                      onClick={() => setShowOrderSummary(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {/* SUMMARY */}
+                  {/* ================= ORDER SUMMARY GRID ================= */}
+                  {(() => {
+                    const orderVouchers = vouchers.filter(
+                      (v: any) => v.orderId === selectedOrder
+                    );
+
+                    const redeemedCount = orderVouchers.filter(
+                      (v: any) =>
+                        v.status === "REDEEMED" || v.status === "Redeemed"
+                    ).length;
+
+                    const activeCount = orderVouchers.length - redeemedCount;
+
+                    return (
+                      <div className="grid md:grid-cols-2 gap-4 mb-6">
+
+                        <p>
+                          <strong>Order ID:</strong> {selectedOrder}
+                        </p>
+
+                        <p>
+                          <strong>Total Vouchers:</strong> {orderVouchers.length}
+                        </p>
+
+                        <p>
+                          <strong>Redeemed:</strong> {redeemedCount}
+                        </p>
+
+                        <p>
+                          <strong>Active:</strong> {activeCount}
+                        </p>
+
+                        <p>
+                          <strong>Redemption %:</strong>{" "}
+                          {orderVouchers.length > 0
+                            ? Math.round((redeemedCount / orderVouchers.length) * 100)
+                            : 0}%
+                        </p>
+
+                      </div>
+                    );
+                  })()}
+
+                  {/* DOWNLOAD */}
+                  <div className="flex justify-end">
+                    <button
+                      className="bg-indigo-600 text-white px-4 py-2 rounded"
+                      onClick={async () => {
+                        const res = await fetch(
+                          `/api/documents/voucher/bundle?orderId=${selectedOrder}`
+                        );
+
+                        if (!res.ok) {
+                          alert("Download failed");
+                          return;
+                        }
+
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `Vouchers-${selectedOrder}.zip`;
+                        a.click();
+
+                        window.URL.revokeObjectURL(url);
+                      }}
+                    >
+                      Download All Vouchers
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            )}
 
           </div>
         )}
@@ -1919,6 +2240,12 @@ export default function SellersDashboard() {
                 <span className="text-sm text-gray-500">
                   {resellers.length} Resellers
                 </span>
+                <button
+                  onClick={() => exportToExcel(resellers, "registered_resellers")}
+                  className="text-sm bg-indigo-600 text-white px-3 py-1 rounded"
+                >
+                  Download Resellers
+                </button>
               </div>
 
               {resellers.length === 0 ? (

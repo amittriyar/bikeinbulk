@@ -11,10 +11,12 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const orderId = searchParams.get('orderId')
   const voucherId = searchParams.get('voucherId')
+  const sellerId = searchParams.get('sellerId')
   const vouchers = await db.voucher.findMany({
     where: {
       ...(orderId ? { orderId } : {}),
-      ...(voucherId ? { voucherId } : {})
+      ...(voucherId ? { voucherId } : {}),
+      ...(sellerId ? { sellerId } : {})   // ✅ ADD THIS
     },
     include: {
       beneficiary: true,
